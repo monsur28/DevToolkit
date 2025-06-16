@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import Link from "next/link"
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
@@ -60,19 +59,30 @@ const socialLinks = [
 export function Footer() {
   const [email, setEmail] = useState("")
   const [isSubscribing, setIsSubscribing] = useState(false)
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
   const { toast } = useToast()
+  
+  // State to hold the dynamic gradient style, only calculated on the client
+  const [gradientStyle, setGradientStyle] = useState({});
 
   const logoSrc = `https://res.cloudinary.com/dg8w1kluo/image/upload/v1750086960/DevToolkit_vpwgql.png`
 
   useEffect(() => {
+    // This entire effect only runs on the client
     const handleMouseMove = (e: MouseEvent) => {
-      setMousePosition({ x: e.clientX, y: e.clientY })
+      // Now it's safe to use window here
+      const { clientX, clientY } = e;
+      const { innerWidth, innerHeight } = window;
+      
+      setGradientStyle({
+        background: `radial-gradient(circle at ${
+          (clientX / innerWidth) * 100
+        }% ${(clientY / innerHeight) * 100}%, rgba(0, 0, 0, 0.1) 0%, transparent 50%)`,
+      });
     }
 
     window.addEventListener("mousemove", handleMouseMove)
     return () => window.removeEventListener("mousemove", handleMouseMove)
-  }, [])
+  }, []) // Empty dependency array ensures this runs only once on mount
 
   const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -98,6 +108,7 @@ export function Footer() {
   }
 
   const scrollToTop = () => {
+    // This is safe because it's only called on a user click
     window.scrollTo({ top: 0, behavior: "smooth" })
   }
 
@@ -105,29 +116,21 @@ export function Footer() {
     <footer className="relative bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-black text-gray-900 dark:text-white overflow-hidden border-t border-gray-200 dark:border-gray-800">
       {/* Enhanced Background Effects */}
       <div className="absolute inset-0">
-        {/* Animated gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-r from-gray-100/50 via-gray-200/30 to-gray-100/50 dark:from-gray-900/50 dark:via-gray-800/30 dark:to-gray-900/50 animate-gradient-x" />
-
-        {/* Dynamic mesh gradient */}
+        
+        {/* Dynamic mesh gradient now uses state */}
         <div
           className="absolute inset-0 opacity-20"
-          style={{
-            background: `radial-gradient(circle at ${(mousePosition.x / window.innerWidth) * 100}% ${(mousePosition.y / window.innerHeight) * 100}%, rgba(0, 0, 0, 0.1) 0%, transparent 50%)`,
-          }}
+          style={gradientStyle}
         />
 
-        {/* Single glowing orb */}
         <div className="absolute top-1/3 right-1/3 w-48 h-48 bg-gradient-to-r from-gray-300/20 to-gray-400/20 dark:from-gray-700/20 dark:to-gray-600/20 rounded-full blur-3xl animate-pulse-slow" />
       </div>
 
       <div className="relative z-10">
-        {/* Decorative top border */}
         <div className="h-1 bg-gradient-to-r from-transparent via-gray-400 dark:via-gray-600 to-transparent" />
-
-        {/* Main Footer Content */}
         <div className="container mx-auto px-4 py-8">
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 lg:gap-8">
-            {/* Enhanced Brand Section */}
             <div className="lg:col-span-1 space-y-4">
               <div className="group">
                 <Link
@@ -158,7 +161,6 @@ export function Footer() {
                 </div>
               </div>
 
-              {/* Enhanced Social Links */}
               <div className="flex space-x-4">
                 {socialLinks.map((social) => {
                   const IconComponent = social.icon
@@ -179,7 +181,6 @@ export function Footer() {
               </div>
             </div>
 
-            {/* Enhanced Links Sections */}
             <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-8">
               <div className="space-y-3">
                 <div className="flex items-center space-x-2">
@@ -192,7 +193,6 @@ export function Footer() {
                       <Link
                         href={link.href}
                         className="group flex items-center text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-all duration-200 text-sm"
-                        style={{ animationDelay: `${index * 100}ms` }}
                       >
                         <span className="w-2 h-2 rounded-full bg-gray-400 dark:bg-gray-600 group-hover:bg-gray-700 dark:group-hover:bg-gray-300 transition-colors duration-200 mr-3" />
                         {link.name}
@@ -215,7 +215,6 @@ export function Footer() {
                         target={link.external ? "_blank" : undefined}
                         rel={link.external ? "noopener noreferrer" : undefined}
                         className="group flex items-center text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-all duration-200 text-sm"
-                        style={{ animationDelay: `${index * 100}ms` }}
                       >
                         <span className="w-2 h-2 rounded-full bg-gray-400 dark:bg-gray-600 group-hover:bg-gray-700 dark:group-hover:bg-gray-300 transition-colors duration-200 mr-3" />
                         {link.name}
@@ -239,7 +238,6 @@ export function Footer() {
                       <Link
                         href={link.href}
                         className="group flex items-center text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-all duration-200 text-sm"
-                        style={{ animationDelay: `${index * 100}ms` }}
                       >
                         <span className="w-2 h-2 rounded-full bg-gray-400 dark:bg-gray-600 group-hover:bg-gray-700 dark:group-hover:bg-gray-300 transition-colors duration-200 mr-3" />
                         {link.name}
@@ -250,7 +248,6 @@ export function Footer() {
               </div>
             </div>
 
-            {/* Enhanced Newsletter Section */}
             <div className="lg:col-span-1 space-y-4">
               <div className="space-y-4">
                 <div className="flex items-center space-x-2">
@@ -296,7 +293,6 @@ export function Footer() {
           </div>
         </div>
 
-        {/* Enhanced Bottom Bar */}
         <div className="border-t border-gray-200 dark:border-gray-800 bg-white/50 dark:bg-black/50 backdrop-blur-md">
           <div className="container mx-auto px-4 py-4">
             <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
@@ -342,36 +338,6 @@ export function Footer() {
           </div>
         </div>
       </div>
-
-      <style jsx>{`
-        @keyframes gradient-x {
-          0%, 100% {
-            transform: translateX(0%);
-          }
-          50% {
-            transform: translateX(-100%);
-          }
-        }
-        
-        @keyframes pulse-slow {
-          0%, 100% {
-            opacity: 0.3;
-            transform: scale(1);
-          }
-          50% {
-            opacity: 0.6;
-            transform: scale(1.05);
-          }
-        }
-        
-        .animate-gradient-x {
-          animation: gradient-x 15s ease infinite;
-        }
-        
-        .animate-pulse-slow {
-          animation: pulse-slow 4s ease-in-out infinite;
-        }
-      `}</style>
     </footer>
   )
 }

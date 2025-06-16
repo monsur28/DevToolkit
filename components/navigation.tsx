@@ -38,8 +38,6 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  DropdownMenuSeparator,
-  DropdownMenuLabel,
 } from '@/components/ui/dropdown-menu';
 import Image from 'next/image';
 
@@ -95,7 +93,6 @@ export function Navigation() {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
-
   const logoSrc = `https://res.cloudinary.com/dg8w1kluo/image/upload/v1750086960/DevToolkit_vpwgql.png`;
 
   useEffect(() => {
@@ -106,12 +103,46 @@ export function Navigation() {
     };
     
     window.addEventListener('scroll', handleScroll);
+    // Call it once to set the initial state
+    handleScroll();
+    
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  if (!mounted) {
-    return null;
-  }
+  // The ThemeToggle can only be rendered on the client
+  const ThemeToggle = () => (
+    <>
+      {/* Desktop Theme Toggle */}
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+        className="hidden lg:flex rounded-full p-3 transition-all duration-300 hover:scale-110 hover:rotate-12 relative group"
+      >
+        <div className="absolute inset-0 bg-gradient-to-r from-yellow-500/20 to-orange-500/20 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        {theme === 'dark' ? (
+          <Sun className="h-5 w-5 text-yellow-500 transition-transform duration-300 group-hover:rotate-12" />
+        ) : (
+          <Moon className="h-5 w-5 text-blue-600 transition-transform duration-300 group-hover:-rotate-12" />
+        )}
+        <span className="sr-only">Toggle theme</span>
+      </Button>
+
+      {/* Mobile Theme Toggle */}
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+        className="lg:hidden rounded-full p-2"
+      >
+        {theme === 'dark' ? (
+          <Sun className="h-4 w-4 text-yellow-500" />
+        ) : (
+          <Moon className="h-4 w-4 text-blue-600" />
+        )}
+      </Button>
+    </>
+  );
 
   return (
     <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
@@ -128,8 +159,9 @@ export function Navigation() {
                 src={logoSrc}
                 alt="DevToolkit Logo"
                 fill
-                className="object-contain rounded-full"
-                sizes="40px"
+                className="object-contain"
+                sizes="192px"
+                priority
               />
             </div>
           </Link>
@@ -158,7 +190,6 @@ export function Navigation() {
                           <span className="font-medium">{item.name}</span>
                           <ChevronDown className="h-3 w-3 transition-transform group-data-[state=open]:rotate-180" />
                           
-                          {/* Active indicator */}
                           {isActive && (
                             <div className="absolute inset-0 bg-gradient-to-r from-primary to-blue-600 rounded-full opacity-20 animate-pulse" />
                           )}
@@ -169,7 +200,6 @@ export function Navigation() {
                         className="w-[600px] max-h-[80vh] overflow-y-auto mt-2 border-0 shadow-2xl bg-background/95 backdrop-blur-xl"
                         sideOffset={8}
                       >
-                        {/* Header */}
                         <div className="p-4 border-b bg-gradient-to-r from-primary/5 to-blue-500/5">
                           <DropdownMenuItem asChild>
                             <Link href="/tools" className="flex items-center justify-between p-3 rounded-lg hover:bg-primary/10 transition-colors">
@@ -187,7 +217,6 @@ export function Navigation() {
                           </DropdownMenuItem>
                         </div>
                         
-                        {/* Categories Grid */}
                         <div className="p-4">
                           <div className="grid grid-cols-2 gap-4">
                             {Object.entries(toolCategories).map(([category, { tools: categoryTools, icon: CategoryIcon, color, bgColor }]) => (
@@ -231,7 +260,6 @@ export function Navigation() {
                           </div>
                         </div>
                         
-                        {/* Footer */}
                         <div className="p-4 border-t bg-gradient-to-r from-primary/5 to-blue-500/5">
                           <DropdownMenuItem asChild>
                             <Link 
@@ -263,7 +291,6 @@ export function Navigation() {
                       <IconComponent className="h-4 w-4" />
                       <span className="font-medium">{item.name}</span>
                       
-                      {/* Active indicator */}
                       {isActive && (
                         <div className="absolute inset-0 bg-gradient-to-r from-primary to-blue-600 rounded-full opacity-20 animate-pulse" />
                       )}
@@ -296,39 +323,14 @@ export function Navigation() {
                 </Link>
               );
             })}
-
-            {/* Theme Toggle */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              className="rounded-full p-3 transition-all duration-300 hover:scale-110 hover:rotate-12 relative group"
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-yellow-500/20 to-orange-500/20 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              {theme === 'dark' ? (
-                <Sun className="h-5 w-5 text-yellow-500 transition-transform duration-300 group-hover:rotate-12" />
-              ) : (
-                <Moon className="h-5 w-5 text-blue-600 transition-transform duration-300 group-hover:-rotate-12" />
-              )}
-              <span className="sr-only">Toggle theme</span>
-            </Button>
+            
+            {/* Render ThemeToggle only when mounted on client */}
+            {mounted && <ThemeToggle />}
           </div>
 
           {/* Mobile Navigation */}
           <div className="lg:hidden flex items-center space-x-2">
-            {/* Theme Toggle Mobile */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              className="rounded-full p-2"
-            >
-              {theme === 'dark' ? (
-                <Sun className="h-4 w-4 text-yellow-500" />
-              ) : (
-                <Moon className="h-4 w-4 text-blue-600" />
-              )}
-            </Button>
+            {mounted && <ThemeToggle />}
 
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
               <SheetTrigger asChild>
@@ -351,7 +353,6 @@ export function Navigation() {
                 </SheetHeader>
                 
                 <div className="flex flex-col space-y-6 mt-8">
-                  {/* Main Navigation */}
                   <div className="space-y-2">
                     {[...navItems.filter(item => !item.hasDropdown), ...endNavItems].map((item) => {
                       const IconComponent = item.icon;
@@ -370,7 +371,6 @@ export function Navigation() {
                     })}
                   </div>
                   
-                  {/* Tools Section */}
                   <div className="border-t pt-6">
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="font-semibold text-lg">Popular Tools</h3>

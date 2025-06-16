@@ -1,64 +1,107 @@
-'use client';
+"use client"
 
-import { useState } from 'react';
-import { ToolLayout } from '@/components/tool-layout';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { useToast } from '@/hooks/use-toast';
-import { Key, Copy, Trash2, ArrowRight, ArrowLeft } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useState, useEffect } from "react"
+import { ToolLayout } from "@/components/tool-layout"
+import { Button } from "@/components/ui/button"
+import { Textarea } from "@/components/ui/textarea"
+import { useToast } from "@/hooks/use-toast"
+import { Key, Copy, Trash2, ArrowRight, ArrowLeft } from "lucide-react"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 export default function Base64Page() {
-  const [input, setInput] = useState('');
-  const [output, setOutput] = useState('');
-  const { toast } = useToast();
+  const [input, setInput] = useState("")
+  const [output, setOutput] = useState("")
+  const [isMounted, setIsMounted] = useState(false)
+  const { toast } = useToast()
+
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
 
   const encode = () => {
+    if (typeof window === "undefined") return
+
     try {
-      const encoded = btoa(input);
-      setOutput(encoded);
+      const encoded = btoa(input)
+      setOutput(encoded)
+      toast({
+        title: "Success",
+        description: "Text encoded to Base64 successfully",
+      })
     } catch (err) {
       toast({
         title: "Encoding Error",
-        description: "Failed to encode the input text",
-        variant: "destructive"
-      });
+        description: "Failed to encode the input text. Make sure the text contains only valid characters.",
+        variant: "destructive",
+      })
     }
-  };
+  }
 
   const decode = () => {
+    if (typeof window === "undefined") return
+
     try {
-      const decoded = atob(input);
-      setOutput(decoded);
+      const decoded = atob(input)
+      setOutput(decoded)
+      toast({
+        title: "Success",
+        description: "Base64 decoded successfully",
+      })
     } catch (err) {
       toast({
-        title: "Decoding Error", 
-        description: "Invalid Base64 string",
-        variant: "destructive"
-      });
+        title: "Decoding Error",
+        description: "Invalid Base64 string. Please check your input.",
+        variant: "destructive",
+      })
     }
-  };
+  }
 
   const copyToClipboard = async () => {
-    if (output) {
-      await navigator.clipboard.writeText(output);
+    if (typeof window === "undefined" || !output) return
+
+    try {
+      await navigator.clipboard.writeText(output)
       toast({
         title: "Copied!",
         description: "Result copied to clipboard",
-      });
+      })
+    } catch (err) {
+      toast({
+        title: "Copy Error",
+        description: "Failed to copy to clipboard",
+        variant: "destructive",
+      })
     }
-  };
+  }
 
   const clear = () => {
-    setInput('');
-    setOutput('');
-  };
+    setInput("")
+    setOutput("")
+  }
 
   const swap = () => {
-    const temp = input;
-    setInput(output);
-    setOutput(temp);
-  };
+    const temp = input
+    setInput(output)
+    setOutput(temp)
+  }
+
+  // Show loading state until mounted to prevent hydration issues
+  if (!isMounted) {
+    return (
+      <ToolLayout
+        title="Base64 Encoder/Decoder"
+        description="Encode text to Base64 or decode Base64 strings back to readable text"
+        icon={<Key className="h-8 w-8 text-green-500" />}
+      >
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading...</p>
+          </div>
+        </div>
+      </ToolLayout>
+    )
+  }
 
   return (
     <ToolLayout
@@ -89,7 +132,7 @@ export default function Base64Page() {
                 className="min-h-[300px]"
               />
               <div className="flex gap-2">
-                <Button onClick={encode} className="flex items-center space-x-2">
+                <Button onClick={encode} disabled={!input.trim()} className="flex items-center space-x-2">
                   <ArrowRight className="h-4 w-4" />
                   <span>Encode</span>
                 </Button>
@@ -136,7 +179,7 @@ export default function Base64Page() {
                 className="min-h-[300px] font-mono text-sm"
               />
               <div className="flex gap-2">
-                <Button onClick={decode} className="flex items-center space-x-2">
+                <Button onClick={decode} disabled={!input.trim()} className="flex items-center space-x-2">
                   <ArrowLeft className="h-4 w-4" />
                   <span>Decode</span>
                 </Button>
@@ -173,5 +216,5 @@ export default function Base64Page() {
         </TabsContent>
       </Tabs>
     </ToolLayout>
-  );
+  )
 }

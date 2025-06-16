@@ -66,47 +66,65 @@ export default function MarkdownPreviewerPage() {
   };
 
   useEffect(() => {
-    if (markdown) {
-      try {
-        const customRenderer = createCustomRenderer(handleCopyCode);
-        marked.setOptions({
-          renderer: customRenderer,
-          highlight: function(code, lang) {
-            // Basic syntax highlighting for common languages
-            if (lang === 'javascript' || lang === 'js') {
-              return code
-                .replace(/\b(function|const|let|var|if|else|for|while|return|import|export|class|extends)\b/g, '<span class="text-purple-600 dark:text-purple-400 font-semibold">$1</span>')
-                .replace(/\b(true|false|null|undefined)\b/g, '<span class="text-blue-600 dark:text-blue-400">$1</span>')
-                .replace(/"([^"]*)"/g, '<span class="text-green-600 dark:text-green-400">"$1"</span>')
-                .replace(/'([^']*)'/g, '<span class="text-green-600 dark:text-green-400">\'$1\'</span>')
-                .replace(/\/\/.*$/gm, '<span class="text-gray-500 italic">$&</span>');
-            } else if (lang === 'css') {
-              return code
-                .replace(/([a-zA-Z-]+)(\s*:\s*)/g, '<span class="text-blue-600 dark:text-blue-400">$1</span>$2')
-                .replace(/(#[a-fA-F0-9]{3,6})/g, '<span class="text-pink-600 dark:text-pink-400">$1</span>')
-                .replace(/(\d+px|\d+em|\d+rem|\d+%)/g, '<span class="text-orange-600 dark:text-orange-400">$1</span>');
-            } else if (lang === 'json') {
-              return code
-                .replace(/"([^"]+)"(\s*:)/g, '<span class="text-blue-600 dark:text-blue-400">"$1"</span>$2')
-                .replace(/:\s*"([^"]*)"/g, ': <span class="text-green-600 dark:text-green-400">"$1"</span>')
-                .replace(/:\s*(true|false|null)/g, ': <span class="text-purple-600 dark:text-purple-400">$1</span>')
-                .replace(/:\s*(\d+)/g, ': <span class="text-orange-600 dark:text-orange-400">$1</span>');
+    // Define an async function to handle the parsing
+    const parseMarkdown = async () => {
+        if (markdown) {
+            // Your custom renderer remains the same
+            const customRenderer = createCustomRenderer(handleCopyCode);
+
+            marked.use({
+                renderer: customRenderer,
+                // The walkTokens extension for syntax highlighting
+                walkTokens: (token) => {
+                    if (token.type === 'code') {
+                        const lang = token.lang || 'text';
+                        let code = token.text;
+
+                        // Your syntax highlighting logic
+                        if (lang === 'javascript' || lang === 'js') {
+                            token.text = code
+                                .replace(/\b(function|const|let|var|if|else|for|while|return|import|export|class|extends)\b/g, '<span class="text-purple-600 dark:text-purple-400 font-semibold">$1</span>')
+                                .replace(/\b(true|false|null|undefined)\b/g, '<span class="text-blue-600 dark:text-blue-400">$1</span>')
+                                .replace(/"([^"]*)"/g, '<span class="text-green-600 dark:text-green-400">"$1"</span>')
+                                .replace(/'([^']*)'/g, '<span class="text-green-600 dark:text-green-400">\'$1\'</span>')
+                                .replace(/\/\/.*$/gm, '<span class="text-gray-500 italic">$&</span>');
+                        } else if (lang === 'css') {
+                           token.text = code
+                                .replace(/([a-zA-Z-]+)(\s*:\s*)/g, '<span class="text-blue-600 dark:text-blue-400">$1</span>$2')
+                                .replace(/(#[a-fA-F0-9]{3,6})/g, '<span class="text-pink-600 dark:text-pink-400">$1</span>')
+                                .replace(/(\d+px|\d+em|\d+rem|\d+%)/g, '<span class="text-orange-600 dark:text-orange-400">$1</span>');
+                        } else if (lang === 'json') {
+                           token.text = code
+                                .replace(/"([^"]+)"(\s*:)/g, '<span class="text-blue-600 dark:text-blue-400">"$1"</span>$2')
+                                .replace(/:\s*"([^"]*)"/g, ': <span class="text-green-600 dark:text-green-400">"$1"</span>')
+                                .replace(/:\s*(true|false|null)/g, ': <span class="text-purple-600 dark:text-purple-400">$1</span>')
+                                .replace(/:\s*(\d+)/g, ': <span class="text-orange-600 dark:text-orange-400">$1</span>');
+                        }
+                    }
+                },
+                breaks: true,
+                gfm: true
+            });
+
+            try {
+                // Await the promise to get the actual HTML string
+                const htmlOutput = await marked.parse(markdown);
+                // Now set the state with the resolved string
+                setHtml(htmlOutput);
+            } catch (error) {
+                console.error('Error parsing markdown:', error);
+                // Optionally set an error state to display to the user
+                setHtml('<p class="text-red-500">Error parsing Markdown.</p>');
             }
-            return code;
-          },
-          breaks: true,
-          gfm: true
-        });
-        
-        const htmlOutput = marked(markdown);
-        setHtml(htmlOutput);
-      } catch (error) {
-        console.error('Error parsing markdown:', error);
-      }
-    } else {
-      setHtml('');
-    }
-  }, [markdown]);
+        } else {
+            setHtml('');
+        }
+    };
+
+    // Call the async function
+    parseMarkdown();
+
+}, [markdown]);
 
   // Add event listeners for copy buttons after HTML is rendered
   useEffect(() => {
@@ -471,7 +489,7 @@ const greeting = 'Welcome to DevToolkit!';
               </div>
               <div className="space-y-2">
                 <h4 className="font-medium">Quote & Rule</h4>
-                <code className="block bg-background p-2 rounded">> Blockquote<br />---<br />Horizontal rule</code>
+                <code className="block bg-background p-2 rounded"> Blockquote<br />---<br />Horizontal rule</code>
               </div>
             </div>
           </CardContent>
