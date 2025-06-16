@@ -2,7 +2,7 @@
   <img src="https://res.cloudinary.com/dg8w1kluo/image/upload/v1750086960/DevToolkit_vpwgql.png" alt="DevToolkit Logo" width="500" />
 </p>
 
-[![Website Deployed on Vercel](https://img.shields.io/badge/Deployed-on%20Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://devtoolkit.vercel.app) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Website Deployed on Vercel](https://img.shields.io/badge/Deployed-on%20Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://dev-toolkit-beta.vercel.app/) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 DevToolkit is **“a comprehensive collection of utilities for web developers”**. It provides a suite of **22 powerful web tools** — from code formatters and converters to generators and testers — all accessible via a single Next.js web app. The project is built with **Next.js 14** (React), uses the **shadcn/ui** component library for UI, and is styled with **Tailwind CSS**. It’s deployed on Vercel for instant access at [devtoolkit.vercel.app](https://devtoolkit.vercel.app).
 
