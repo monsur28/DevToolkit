@@ -11,6 +11,9 @@ const inter = Inter({ subsets: ['latin'] });
 export const metadata: Metadata = {
   title: 'DevToolkit - Simplify. Debug. Build.',
   description: 'A comprehensive collection of developer tools including JSON formatter, Base64 encoder/decoder, JWT decoder, UUID generator, and regex tester.',
+  icons: {
+    icon: '/favicon.png', // Or your preferred icon path
+  },
 };
 
 export default function RootLayout({
