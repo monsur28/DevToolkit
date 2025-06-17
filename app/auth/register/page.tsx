@@ -8,11 +8,12 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Eye, EyeOff, UserPlus, Mail, Lock, CheckCircle } from 'lucide-react';
+import { Eye, EyeOff, UserPlus, Mail, Lock, CheckCircle, User } from 'lucide-react';
 
 export default function RegisterPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -58,11 +59,21 @@ export default function RegisterPage() {
       return;
     }
 
+    if (!name.trim()) {
+      toast({
+        title: 'Name Required',
+        description: 'Please enter your name',
+        variant: 'destructive',
+      });
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, name }),
       });
 
       const data = await response.json();
@@ -101,6 +112,22 @@ export default function RegisterPage() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Full Name</Label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="name"
+                    type="text"
+                    placeholder="Enter your full name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="pl-10"
+                    required
+                  />
+                </div>
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <div className="relative">
@@ -162,6 +189,10 @@ export default function RegisterPage() {
                       <div className={`flex items-center ${passwordRequirements.number ? 'text-green-600' : 'text-muted-foreground'}`}>
                         <CheckCircle className="h-3 w-3 mr-1" />
                         Number
+                      </div>
+                      <div className={`flex items-center ${passwordRequirements.special ? 'text-green-600' : 'text-muted-foreground'}`}>
+                        <CheckCircle className="h-3 w-3 mr-1" />
+                        Special character
                       </div>
                     </div>
                   </div>
