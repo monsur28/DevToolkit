@@ -32,6 +32,7 @@ export default function LoginPage() {
       const data = await response.json();
 
       if (data.success) {
+        // Store token in localStorage for client-side auth
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
         

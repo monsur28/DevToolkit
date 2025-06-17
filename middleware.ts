@@ -13,19 +13,22 @@ export function middleware(request: NextRequest) {
     '/auth/reset-password',
     '/about',
     '/contact',
+    '/tools',
   ];
   
   // Check if the path starts with any of these prefixes
   const isPublicPathPrefix = [
     '/api/auth/',
+    '/api/gemini/',
     '/_next/',
     '/favicon.ico',
+    '/tools/',
   ].some(prefix => path.startsWith(prefix));
   
   // Check if the path is public
   const isPublicPath = publicPaths.includes(path) || isPublicPathPrefix;
   
-  // Get the token from cookies
+  // Get the token from cookies or localStorage
   const token = request.cookies.get('token')?.value;
   
   // If the path is not public and there's no token, redirect to login
@@ -49,6 +52,6 @@ export const config = {
      * 1. All API routes that don't require auth
      * 2. Static files like images, fonts, etc.
      */
-    '/((?!api/auth|_next/static|_next/image|favicon.ico).*)',
+    '/((?!_next/static|_next/image|favicon.ico).*)',
   ],
 };

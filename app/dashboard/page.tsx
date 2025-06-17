@@ -239,9 +239,32 @@ export default function DashboardPage() {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    router.push('/auth/login');
+  const handleLogout = async () => {
+    try {
+      // Call logout API to invalidate server-side session
+      const token = localStorage.getItem('token');
+      if (token) {
+        await fetch('/api/auth/logout', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+      }
+      
+      // Clear client-side storage
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      
+      // Redirect to login page
+      router.push('/auth/login');
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Even if the API call fails, clear local storage and redirect
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      router.push('/auth/login');
+    }
   };
 
   const getStatusColor = (status: string) => {

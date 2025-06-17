@@ -25,7 +25,19 @@ export async function POST(request: NextRequest) {
     const result = await AuthService.login(email, password, deviceInfo);
     
     if (result.success) {
-      return NextResponse.json(result, { status: 200 });
+      // Set token in cookies for server-side auth
+      const response = NextResponse.json(result, { status: 200 });
+      response.cookies.set({
+        name: 'token',
+        value: result.token!,
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 7 * 24 * 60 * 60, // 7 days
+        path: '/',
+      });
+      
+      return response;
     } else {
       return NextResponse.json(result, { status: 401 });
     }
