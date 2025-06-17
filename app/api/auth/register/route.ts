@@ -3,16 +3,16 @@ import { AuthService } from '@/lib/auth-service';
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password } = await request.json();
+    const { email, password, name } = await request.json();
 
-    if (!email || !password) {
+    if (!email || !password || !name) {
       return NextResponse.json(
-        { success: false, message: 'Email and password are required' },
+        { success: false, message: 'Email, password, and name are required' },
         { status: 400 }
       );
     }
 
-    // Get device info from request
+    // Get device info from request headers directly
     const deviceInfo = {
       userAgent: request.headers.get('user-agent') || '',
       ipAddress: request.headers.get('x-forwarded-for') || 
@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
                  'unknown',
     };
 
-    const result = await AuthService.register(email, password, deviceInfo);
+    const result = await AuthService.register(email, password, name, deviceInfo);
     
     if (result.success) {
       return NextResponse.json(result, { status: 201 });
