@@ -14,12 +14,17 @@ export class GeminiAPI {
 
   constructor() {
     this.apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY || '';
-    if (!this.apiKey) {
-      throw new Error('Gemini API key not found. Please set NEXT_PUBLIC_GEMINI_API_KEY in your environment variables.');
+    if (!this.apiKey || this.apiKey === 'your_gemini_api_key_here') {
+      console.warn('Gemini API key not found or not configured. Please set NEXT_PUBLIC_GEMINI_API_KEY in your .env.local file.');
+      // Don't throw error, allow fallback methods to work
     }
   }
 
-  async generateContent(prompt: string): Promise<string> {
+  private async makeRequest(prompt: string): Promise<string> {
+    if (!this.apiKey || this.apiKey === 'your_gemini_api_key_here') {
+      throw new Error('Gemini API key not configured. Please add your API key to .env.local file.');
+    }
+
     try {
       const response = await fetch(`${this.baseUrl}?key=${this.apiKey}`, {
         method: 'POST',
@@ -61,6 +66,7 @@ export class GeminiAPI {
 
       if (!response.ok) {
         const errorText = await response.text();
+        console.error('Gemini API error:', response.status, errorText);
         throw new Error(`Gemini API error: ${response.status} - ${errorText}`);
       }
 
@@ -72,9 +78,13 @@ export class GeminiAPI {
 
       return data.candidates[0]?.content?.parts[0]?.text || '';
     } catch (error) {
-      console.error('Gemini API error:', error);
+      console.error('Gemini API request failed:', error);
       throw error;
     }
+  }
+
+  async generateContent(prompt: string): Promise<string> {
+    return this.makeRequest(prompt);
   }
 
   async generateSQL(description: string, tableContext?: string): Promise<string> {
@@ -92,7 +102,7 @@ export class GeminiAPI {
     
     SQL Query:`;
 
-    const result = await this.generateContent(prompt);
+    const result = await this.makeRequest(prompt);
     
     // Clean up the response to extract just the SQL
     return result
@@ -117,7 +127,7 @@ export class GeminiAPI {
     PATTERN: [regex pattern only]
     EXPLANATION: [brief explanation of what the pattern matches and how it works]`;
 
-    const response = await this.generateContent(prompt);
+    const response = await this.makeRequest(prompt);
     
     const patternMatch = response.match(/PATTERN:\s*(.+)/);
     const explanationMatch = response.match(/EXPLANATION:\s*(.+)/);
@@ -145,7 +155,7 @@ export class GeminiAPI {
     - "every Monday at 9 AM" → CRON: 0 9 * * 1
     - "every 15 minutes" → CRON: */15 * * * *`;
 
-    const response = await this.generateContent(prompt);
+    const response = await this.makeRequest(prompt);
     
     const cronMatch = response.match(/CRON:\s*(.+)/);
     const explanationMatch = response.match(/EXPLANATION:\s*(.+)/);
@@ -178,7 +188,7 @@ IMPROVEMENTS:
 - [specific improvement 2]
 - [specific improvement 3]`;
 
-    const response = await this.generateContent(prompt);
+    const response = await this.makeRequest(prompt);
     
     const optimizedMatch = response.match(/OPTIMIZED:\s*([\s\S]*?)(?=IMPROVEMENTS:|$)/);
     const improvementsMatch = response.match(/IMPROVEMENTS:\s*([\s\S]*)/);
@@ -211,7 +221,7 @@ Requirements:
 
 Provide a comprehensive but easy-to-understand explanation:`;
 
-    return this.generateContent(prompt);
+    return this.makeRequest(prompt);
   }
 
   async generateTestData(schema: string, count: number = 5): Promise<string> {
@@ -229,7 +239,7 @@ Requirements:
 
 Return only the JSON array, no explanations:`;
 
-    const result = await this.generateContent(prompt);
+    const result = await this.makeRequest(prompt);
     
     // Clean up the response to extract just the JSON
     return result
@@ -267,7 +277,7 @@ Return in this exact JSON format:
   "qualityScore": 75
 }`;
 
-    const response = await this.generateContent(prompt);
+    const response = await this.makeRequest(prompt);
     
     try {
       // Extract JSON from the response
@@ -319,7 +329,7 @@ Return in this exact JSON format:
   }
 ]`;
 
-    const response = await this.generateContent(prompt);
+    const response = await this.makeRequest(prompt);
     
     try {
       // Extract JSON from the response
@@ -362,7 +372,7 @@ Requirements:
 
 Return only the README content in Markdown format:`;
 
-    return this.generateContent(prompt);
+    return this.makeRequest(prompt);
   }
 
   async analyzeAPIResponse(response: string): Promise<string> {
@@ -381,7 +391,7 @@ Requirements:
 
 Provide a clear, concise analysis:`;
 
-    return this.generateContent(prompt);
+    return this.makeRequest(prompt);
   }
 
   async answerTechQuestion(question: string): Promise<string> {
@@ -399,6 +409,6 @@ Requirements:
 
 Your answer:`;
 
-    return this.generateContent(prompt);
+    return this.makeRequest(prompt);
   }
 }
