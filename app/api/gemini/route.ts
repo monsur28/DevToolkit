@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { headers } from 'next/headers';
 import { GeminiService } from '@/lib/gemini-service';
 import { AuthService } from '@/lib/auth-service';
 
 export async function POST(request: NextRequest) {
   try {
     // Check authentication
-    const authHeader = request.headers.get('authorization');
+    const headersList = headers();
+    const authHeader = headersList.get('authorization');
     let userId: string | undefined;
     
     if (authHeader && authHeader.startsWith('Bearer ')) {

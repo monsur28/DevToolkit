@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { headers } from 'next/headers';
 import { AuthService } from '@/lib/auth-service';
 
 export async function POST(request: NextRequest) {
@@ -13,10 +14,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Get device info from request
+    const headersList = headers();
     const deviceInfo = {
-      userAgent: request.headers.get('user-agent') || '',
-      ipAddress: request.headers.get('x-forwarded-for') || 
-                 request.headers.get('x-real-ip') || 
+      userAgent: headersList.get('user-agent') || '',
+      ipAddress: headersList.get('x-forwarded-for') || 
+                 headersList.get('x-real-ip') || 
                  'unknown',
     };
 
