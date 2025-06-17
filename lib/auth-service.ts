@@ -50,7 +50,7 @@ export class AuthService {
     }
   }
 
-  static async register(email: string, password: string, deviceInfo?: any): Promise<{ success: boolean; message: string; user?: UserDocument }> {
+  static async register(email: string, password: string, name: string, deviceInfo?: any): Promise<{ success: boolean; message: string; user?: UserDocument }> {
     const collection = await this.usersCollection();
     
     // Check if user already exists
@@ -70,13 +70,21 @@ export class AuthService {
       return { success: false, message: 'Password must be at least 8 characters long' };
     }
 
+    // Split name into first and last name
+    const nameParts = name.trim().split(' ');
+    const firstName = nameParts[0];
+    const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
+
     const hashedPassword = await this.hashPassword(password);
     const verificationToken = uuidv4();
 
     const newUser: UserDocument = {
       email,
       password: hashedPassword,
-      profile: {},
+      profile: {
+        firstName,
+        lastName
+      },
       preferences: {
         theme: 'system',
         language: 'en',
