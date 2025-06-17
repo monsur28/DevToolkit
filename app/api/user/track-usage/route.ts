@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { AuthService } from '@/lib/auth';
+import { AuthService } from '@/lib/auth-service';
 
 export async function POST(request: NextRequest) {
   try {
@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    AuthService.updateUserUsage(decoded.userId, toolName, success);
+    await AuthService.updateUsage(decoded.userId, toolName, success);
     
     return NextResponse.json({
       success: true,

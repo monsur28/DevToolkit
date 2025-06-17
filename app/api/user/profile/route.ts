@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { AuthService } from '@/lib/auth-service';
-import { SuggestionService } from '@/lib/suggestion-service';
 
 export async function GET(request: NextRequest) {
   try {
@@ -22,14 +21,24 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const suggestions = await SuggestionService.getSuggestionsByUser(decoded.userId);
+    const user = await AuthService.getUserById(decoded.userId);
+    
+    if (!user) {
+      return NextResponse.json(
+        { success: false, message: 'User not found' },
+        { status: 404 }
+      );
+    }
+
+    // Remove sensitive information
+    const { password, ...userWithoutPassword } = user;
     
     return NextResponse.json({
       success: true,
-      suggestions
+      user: userWithoutPassword
     });
   } catch (error) {
-    console.error('Get suggestions error:', error);
+    console.error('Get user profile error:', error);
     return NextResponse.json(
       { success: false, message: 'Internal server error' },
       { status: 500 }
@@ -37,7 +46,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function POST(request: NextRequest) {
+export async function PUT(request: NextRequest) {
   try {
     const authHeader = request.headers.get('authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -57,31 +66,29 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { type, category, title, description, attachments } = await request.json();
-
-    if (!type || !category || !title || !description) {
+    const updates = await request.json();
+    
+    // Prevent updating sensitive fields
+    delete updates.password;
+    delete updates.role;
+    delete updates.email;
+    delete updates.authentication;
+    
+    const success = await AuthService.updateUser(decoded.userId, updates);
+    
+    if (success) {
+      return NextResponse.json({
+        success: true,
+        message: 'Profile updated successfully'
+      });
+    } else {
       return NextResponse.json(
-        { success: false, message: 'Type, category, title, and description are required' },
+        { success: false, message: 'Failed to update profile' },
         { status: 400 }
       );
     }
-
-    const suggestion = await SuggestionService.createSuggestion(
-      decoded.userId,
-      type,
-      category,
-      title,
-      description,
-      attachments || []
-    );
-    
-    return NextResponse.json({
-      success: true,
-      message: 'Suggestion submitted successfully',
-      suggestion
-    });
   } catch (error) {
-    console.error('Submit suggestion error:', error);
+    console.error('Update user profile error:', error);
     return NextResponse.json(
       { success: false, message: 'Internal server error' },
       { status: 500 }

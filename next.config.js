@@ -36,6 +36,8 @@ const nextConfig = {
     
     return config;
   },
+  // Important: Remove the static export to enable API routes
+  // output: 'export', // This line should be removed
 };
 
 module.exports = nextConfig;

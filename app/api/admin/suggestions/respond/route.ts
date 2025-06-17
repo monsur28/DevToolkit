@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { AuthService } from '@/lib/auth';
+import { AuthService } from '@/lib/auth-service';
+import { SuggestionService } from '@/lib/suggestion-service';
 
 export async function POST(request: NextRequest) {
   try {
@@ -21,21 +22,33 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { suggestionId, adminResponse } = await request.json();
+    const { suggestionId, status, adminResponse } = await request.json();
 
-    if (!suggestionId || !adminResponse) {
+    if (!suggestionId || !status) {
       return NextResponse.json(
-        { success: false, message: 'Suggestion ID and admin response are required' },
+        { success: false, message: 'Suggestion ID and status are required' },
         { status: 400 }
       );
     }
 
-    AuthService.respondToSuggestion(suggestionId, adminResponse);
-    
-    return NextResponse.json({
-      success: true,
-      message: 'Response sent successfully'
-    });
+    const success = await SuggestionService.updateSuggestionStatus(
+      suggestionId,
+      status,
+      decoded.userId,
+      adminResponse
+    );
+
+    if (success) {
+      return NextResponse.json({
+        success: true,
+        message: 'Suggestion updated successfully'
+      });
+    } else {
+      return NextResponse.json(
+        { success: false, message: 'Failed to update suggestion' },
+        { status: 400 }
+      );
+    }
   } catch (error) {
     console.error('Respond to suggestion error:', error);
     return NextResponse.json(

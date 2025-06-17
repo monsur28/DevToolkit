@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { AuthService } from '@/lib/auth';
+import { AuthService } from '@/lib/auth-service';
+import { getCollection } from '@/lib/mongodb';
 
 export async function GET(request: NextRequest) {
   try {
@@ -21,11 +22,21 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const users = AuthService.getAllUsers();
+    const usersCollection = await getCollection('users');
+    const users = await usersCollection
+      .find({}, { 
+        projection: { 
+          password: 0, 
+          'authentication.verificationToken': 0,
+          'authentication.resetToken': 0 
+        } 
+      })
+      .sort({ 'metadata.createdAt': -1 })
+      .toArray();
     
     return NextResponse.json({
       success: true,
-      users: users.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      users
     });
   } catch (error) {
     console.error('Get users error:', error);

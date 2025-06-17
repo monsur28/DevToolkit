@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { AuthService } from '@/lib/auth';
+import { AuthService } from '@/lib/auth-service';
+import { SuggestionService } from '@/lib/suggestion-service';
 
 export async function GET(request: NextRequest) {
   try {
@@ -21,20 +22,27 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const suggestions = AuthService.getSuggestions();
+    const url = new URL(request.url);
+    const status = url.searchParams.get('status') as any;
+    const type = url.searchParams.get('type') as any;
+    const limit = parseInt(url.searchParams.get('limit') || '50');
+
+    const suggestions = await SuggestionService.getAllSuggestions(status, type, limit);
     
     // Add user email to suggestions
-    const suggestionsWithUserInfo = suggestions.map(suggestion => {
-      const user = AuthService.getUserById(suggestion.userId);
-      return {
-        ...suggestion,
-        userEmail: user?.email || 'Unknown'
-      };
-    });
+    const suggestionsWithUserInfo = await Promise.all(
+      suggestions.map(async (suggestion) => {
+        const user = await AuthService.getUserById(suggestion.userId);
+        return {
+          ...suggestion,
+          userEmail: user?.email || 'Unknown'
+        };
+      })
+    );
     
     return NextResponse.json({
       success: true,
-      suggestions: suggestionsWithUserInfo.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      suggestions: suggestionsWithUserInfo
     });
   } catch (error) {
     console.error('Get admin suggestions error:', error);

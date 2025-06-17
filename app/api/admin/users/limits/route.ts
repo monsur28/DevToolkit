@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { AuthService } from '@/lib/auth';
+import { AuthService } from '@/lib/auth-service';
+import { ObjectId } from 'mongodb';
 
 export async function POST(request: NextRequest) {
   try {
@@ -30,12 +31,35 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    AuthService.updateUserLimits(userId, dailyLimit, monthlyLimit);
-    
-    return NextResponse.json({
-      success: true,
-      message: 'User limits updated successfully'
+    const success = await AuthService.updateUser(userId, {
+      'usage.dailyLimit': dailyLimit,
+      'usage.monthlyLimit': monthlyLimit,
+      'metadata.updatedAt': new Date()
     });
+
+    if (success) {
+      // Log admin action
+      await AuthService.logActivity(
+        new ObjectId(decoded.userId),
+        'user_limits_updated',
+        'admin',
+        { 
+          description: `Updated user limits: ${userId}`,
+          metadata: { targetUserId: userId, dailyLimit, monthlyLimit }
+        },
+        'success'
+      );
+
+      return NextResponse.json({
+        success: true,
+        message: 'User limits updated successfully'
+      });
+    } else {
+      return NextResponse.json(
+        { success: false, message: 'Failed to update user limits' },
+        { status: 400 }
+      );
+    }
   } catch (error) {
     console.error('Update user limits error:', error);
     return NextResponse.json(

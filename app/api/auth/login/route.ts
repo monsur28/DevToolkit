@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { AuthService } from '@/lib/auth';
+import { AuthService } from '@/lib/auth-service';
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,7 +12,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const result = await AuthService.login(email, password);
+    // Get device info from request
+    const deviceInfo = {
+      userAgent: request.headers.get('user-agent') || '',
+      ipAddress: request.headers.get('x-forwarded-for') || 
+                 request.headers.get('x-real-ip') || 
+                 'unknown',
+    };
+
+    const result = await AuthService.login(email, password, deviceInfo);
     
     if (result.success) {
       return NextResponse.json(result, { status: 200 });

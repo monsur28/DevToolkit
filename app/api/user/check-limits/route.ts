@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { AuthService } from '@/lib/auth';
+import { AuthService } from '@/lib/auth-service';
 
 export async function GET(request: NextRequest) {
   try {
@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const result = AuthService.canUserUseAI(decoded.userId);
+    const result = await AuthService.canUserUseAI(decoded.userId);
     
     return NextResponse.json({
       success: true,

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { AuthService } from '@/lib/auth';
+import { AuthService } from '@/lib/auth-service';
+import { getCollection } from '@/lib/mongodb';
+import { ObjectId } from 'mongodb';
 
 export async function GET(request: NextRequest) {
   try {
@@ -21,11 +23,45 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const history = AuthService.getUserUsageHistory(decoded.userId);
+    const usageCollection = await getCollection('usageAnalytics');
+    const toolsCollection = await getCollection('tools');
+    
+    // Get usage history with tool names
+    const history = await usageCollection.aggregate([
+      { 
+        $match: { 
+          userId: new ObjectId(decoded.userId) 
+        } 
+      },
+      {
+        $lookup: {
+          from: 'tools',
+          localField: 'toolId',
+          foreignField: '_id',
+          as: 'tool'
+        }
+      },
+      {
+        $project: {
+          _id: 1,
+          toolName: { 
+            $cond: [
+              { $gt: [{ $size: '$tool' }, 0] },
+              { $arrayElemAt: ['$tool.name', 0] },
+              'Unknown Tool'
+            ]
+          },
+          timestamp: '$timestamp',
+          success: '$usage.success'
+        }
+      },
+      { $sort: { timestamp: -1 } },
+      { $limit: 50 }
+    ]).toArray();
     
     return NextResponse.json({
       success: true,
-      history: history.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+      history
     });
   } catch (error) {
     console.error('Usage history error:', error);
