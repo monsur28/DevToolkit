@@ -237,4 +237,168 @@ Return only the JSON array, no explanations:`;
       .replace(/```/g, '')
       .trim();
   }
+
+  async findBugs(code: string): Promise<{ bugs: any[]; qualityScore: number }> {
+    const prompt = `You are a senior code reviewer. Analyze this code for bugs, security issues, and bad practices:
+
+\`\`\`
+${code}
+\`\`\`
+
+Requirements:
+- Identify bugs, security issues, and bad practices
+- Assign severity (critical, high, medium, low) to each issue
+- Provide a brief description of each issue
+- Suggest a fix for each issue
+- Assign a quality score from 0-100
+- Be thorough but focus on real issues, not style preferences
+
+Return in this exact JSON format:
+{
+  "bugs": [
+    {
+      "severity": "high",
+      "type": "Off-by-one error",
+      "description": "Loop iterates one element too many",
+      "suggestion": "Change <= to <",
+      "lineNumber": 3
+    }
+  ],
+  "qualityScore": 75
+}`;
+
+    const response = await this.generateContent(prompt);
+    
+    try {
+      // Extract JSON from the response
+      const jsonMatch = response.match(/```json\s*([\s\S]*?)\s*```/) || 
+                        response.match(/```\s*([\s\S]*?)\s*```/) ||
+                        [null, response];
+      
+      const jsonStr = jsonMatch?.[1]?.trim() || response;
+      const result = JSON.parse(jsonStr);
+      
+      return {
+        bugs: result.bugs || [],
+        qualityScore: result.qualityScore || 0
+      };
+    } catch (error) {
+      console.error('Error parsing bug finder response:', error);
+      return { bugs: [], qualityScore: 0 };
+    }
+  }
+
+  async generateCommitMessages(diff: string, context?: string, type?: string): Promise<any[]> {
+    const prompt = `You are a Git expert. Generate conventional commit messages based on this diff:
+
+\`\`\`
+${diff}
+\`\`\`
+
+${context ? `Additional context: ${context}` : ''}
+${type ? `Preferred commit type: ${type}` : ''}
+
+Requirements:
+- Follow conventional commits format: type(scope): subject
+- Generate 3 different commit message options
+- Keep subject under 72 characters
+- Use imperative mood ("add" not "added")
+- Include body for complex changes
+- Identify the most appropriate type (feat, fix, refactor, etc.)
+- Be specific about what changed
+
+Return in this exact JSON format:
+[
+  {
+    "type": "feat",
+    "scope": "button",
+    "subject": "add variant and size props",
+    "body": "Enhance Button component with variant and size props for better flexibility",
+    "footer": "BREAKING CHANGE: Button props interface has changed",
+    "conventional": "feat(button): add variant and size props"
+  }
+]`;
+
+    const response = await this.generateContent(prompt);
+    
+    try {
+      // Extract JSON from the response
+      const jsonMatch = response.match(/```json\s*([\s\S]*?)\s*```/) || 
+                        response.match(/```\s*([\s\S]*?)\s*```/) ||
+                        [null, response];
+      
+      const jsonStr = jsonMatch?.[1]?.trim() || response;
+      return JSON.parse(jsonStr);
+    } catch (error) {
+      console.error('Error parsing commit message response:', error);
+      return [];
+    }
+  }
+
+  async generateReadme(projectInfo: any, sections: string[], template: string): Promise<string> {
+    const prompt = `You are a technical documentation expert. Generate a professional README.md for this project:
+
+Project Name: ${projectInfo.name}
+Description: ${projectInfo.description}
+Tech Stack: ${projectInfo.tech || 'Not specified'}
+Features: ${projectInfo.features || 'Not specified'}
+Installation: ${projectInfo.installation || 'Not specified'}
+Usage: ${projectInfo.usage || 'Not specified'}
+License: ${projectInfo.license || 'MIT'}
+Author: ${projectInfo.author || 'Not specified'}
+Repository: ${projectInfo.repository || 'Not specified'}
+
+Template style: ${template}
+Sections to include: ${sections.join(', ')}
+
+Requirements:
+- Create a professional, well-formatted README.md in Markdown
+- Include all the specified sections
+- Use proper Markdown formatting (headers, lists, code blocks, etc.)
+- Add appropriate badges where relevant
+- Keep it concise but comprehensive
+- Follow the selected template style
+- Include placeholders for screenshots/demos if that section is included
+
+Return only the README content in Markdown format:`;
+
+    return this.generateContent(prompt);
+  }
+
+  async analyzeAPIResponse(response: string): Promise<string> {
+    const prompt = `You are an API expert. Analyze this API response and provide a clear summary:
+
+\`\`\`
+${response}
+\`\`\`
+
+Requirements:
+- Identify the structure and key components
+- Highlight important data points and relationships
+- Note any errors, warnings, or unusual patterns
+- Explain what this response represents
+- Suggest how a developer might use this data
+
+Provide a clear, concise analysis:`;
+
+    return this.generateContent(prompt);
+  }
+
+  async answerTechQuestion(question: string): Promise<string> {
+    const prompt = `You are a senior software developer and technical educator. Answer this programming or technology question:
+
+Question: ${question}
+
+Requirements:
+- Provide a clear, accurate, and concise answer
+- Include code examples where appropriate
+- Explain technical concepts in an accessible way
+- Cite sources or documentation when relevant
+- Focus on practical, actionable information
+- Keep the answer under 500 words
+
+Your answer:`;
+
+    return this.generateContent(prompt);
+  }
 }
