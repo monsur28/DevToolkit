@@ -21,7 +21,10 @@ import {
   Database,
   Send,
   Sparkles,
-  Brain
+  Brain,
+  Bug,
+  GitCommit,
+  FileText
 } from 'lucide-react';
 
 const categories = [
@@ -92,6 +95,66 @@ const tools = [
     borderColor: 'border-green-500/20',
     category: 'ai-powered',
     tags: ['data', 'ai', 'generator', 'gemini', 'testing'],
+    aiPowered: true
+  },
+  {
+    name: 'AI Bug Finder',
+    description: 'Paste code and highlight potential issues or bad practices using AI analysis',
+    icon: Bug,
+    href: '/tools/ai-bug-finder',
+    color: 'text-red-600',
+    bgColor: 'bg-red-500/10',
+    borderColor: 'border-red-500/20',
+    category: 'ai-powered',
+    tags: ['code', 'bugs', 'analysis', 'security', 'quality'],
+    aiPowered: true
+  },
+  {
+    name: 'Commit Message Generator',
+    description: 'Turn your diffs into meaningful Git commit messages with AI',
+    icon: GitCommit,
+    href: '/tools/commit-message-generator',
+    color: 'text-green-600',
+    bgColor: 'bg-green-500/10',
+    borderColor: 'border-green-500/20',
+    category: 'ai-powered',
+    tags: ['git', 'commit', 'conventional', 'message'],
+    aiPowered: true
+  },
+  {
+    name: 'README Generator',
+    description: 'Automatically generate project README templates with AI assistance',
+    icon: FileText,
+    href: '/tools/readme-generator',
+    color: 'text-blue-600',
+    bgColor: 'bg-blue-500/10',
+    borderColor: 'border-blue-500/20',
+    category: 'ai-powered',
+    tags: ['documentation', 'markdown', 'project', 'template'],
+    aiPowered: true
+  },
+  {
+    name: 'API Response Analyzer',
+    description: 'Paste JSON/API responses and get structured summaries with AI insights',
+    icon: Terminal,
+    href: '/tools/api-response-analyzer',
+    color: 'text-indigo-500',
+    bgColor: 'bg-indigo-500/10',
+    borderColor: 'border-indigo-500/20',
+    category: 'ai-powered',
+    tags: ['api', 'json', 'analysis', 'response', 'data'],
+    aiPowered: true
+  },
+  {
+    name: 'Learning Assistant',
+    description: 'Ask tech questions inside the DevToolkit interface with AI-powered answers',
+    icon: Brain,
+    href: '/tools/learning-assistant',
+    color: 'text-purple-600',
+    bgColor: 'bg-purple-500/10',
+    borderColor: 'border-purple-500/20',
+    category: 'ai-powered',
+    tags: ['learning', 'questions', 'education', 'assistance'],
     aiPowered: true
   },
   {

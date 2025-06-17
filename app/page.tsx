@@ -22,7 +22,10 @@ import {
   Brain,
   Rocket,
   Code,
-  Globe
+  Globe,
+  Bug,
+  GitCommit,
+  FileText
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
@@ -38,43 +41,43 @@ const featuredTools = [
     aiPowered: true
   },
   {
-    name: 'AI Regex Generator',
-    description: 'Create regex patterns from descriptions with AI-powered explanations',
-    icon: Search,
-    href: '/tools/regex-tester',
-    color: 'text-red-500',
+    name: 'AI Bug Finder',
+    description: 'Paste code and highlight potential issues or bad practices using AI',
+    icon: Bug,
+    href: '/tools/ai-bug-finder',
+    color: 'text-red-600',
     bgColor: 'bg-red-500/10',
     borderColor: 'border-red-500/20',
     aiPowered: true
   },
   {
-    name: 'AI Cron Generator', 
-    description: 'Build cron expressions from natural language with intelligent scheduling',
-    icon: Calendar,
-    href: '/tools/cron-generator',
-    color: 'text-amber-500',
-    bgColor: 'bg-amber-500/10',
-    borderColor: 'border-amber-500/20',
-    aiPowered: true
-  },
-  {
-    name: 'AI Code Optimizer',
-    description: 'Optimize and explain code with AI-powered analysis and improvements',
-    icon: Zap,
-    href: '/tools/code-formatter',
-    color: 'text-emerald-500',
-    bgColor: 'bg-emerald-500/10',
-    borderColor: 'border-emerald-500/20',
-    aiPowered: true
-  },
-  {
-    name: 'AI Data Generator',
-    description: 'Generate realistic test data from schema descriptions using AI',
-    icon: Shuffle,
-    href: '/tools/faker-data-generator',
-    color: 'text-green-500',
+    name: 'Commit Message Generator', 
+    description: 'Turn your diffs into meaningful Git commit messages with AI',
+    icon: GitCommit,
+    href: '/tools/commit-message-generator',
+    color: 'text-green-600',
     bgColor: 'bg-green-500/10',
     borderColor: 'border-green-500/20',
+    aiPowered: true
+  },
+  {
+    name: 'README Generator',
+    description: 'Automatically generate project README templates with AI assistance',
+    icon: FileText,
+    href: '/tools/readme-generator',
+    color: 'text-blue-600',
+    bgColor: 'bg-blue-500/10',
+    borderColor: 'border-blue-500/20',
+    aiPowered: true
+  },
+  {
+    name: 'Learning Assistant',
+    description: 'Ask tech questions inside the DevToolkit interface with AI-powered answers',
+    icon: Brain,
+    href: '/tools/learning-assistant',
+    color: 'text-purple-600',
+    bgColor: 'bg-purple-500/10',
+    borderColor: 'border-purple-500/20',
     aiPowered: true
   },
   {
@@ -89,8 +92,8 @@ const featuredTools = [
 ];
 
 const stats = [
-  { label: 'AI-Powered Tools', value: '5', icon: Brain },
-  { label: 'Total Tools', value: '9', icon: Code },
+  { label: 'AI-Powered Tools', value: '10', icon: Brain },
+  { label: 'Total Tools', value: '14', icon: Code },
   { label: 'Happy Developers', value: '10K+', icon: Users },
   { label: 'GitHub Stars', value: '50+', icon: Star }
 ];
