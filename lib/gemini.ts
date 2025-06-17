@@ -10,12 +10,12 @@ interface GeminiResponse {
 
 export class GeminiAPI {
   private apiKey: string;
-  private baseUrl = 'https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent';
+  private baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
 
   constructor() {
     this.apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY || '';
     if (!this.apiKey) {
-      throw new Error('Gemini API key not found');
+      throw new Error('Gemini API key not found. Please set NEXT_PUBLIC_GEMINI_API_KEY in your environment variables.');
     }
   }
 
@@ -36,16 +36,40 @@ export class GeminiAPI {
             temperature: 0.7,
             topK: 40,
             topP: 0.95,
-            maxOutputTokens: 1024,
+            maxOutputTokens: 2048,
           },
+          safetySettings: [
+            {
+              category: "HARM_CATEGORY_HARASSMENT",
+              threshold: "BLOCK_MEDIUM_AND_ABOVE"
+            },
+            {
+              category: "HARM_CATEGORY_HATE_SPEECH",
+              threshold: "BLOCK_MEDIUM_AND_ABOVE"
+            },
+            {
+              category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+              threshold: "BLOCK_MEDIUM_AND_ABOVE"
+            },
+            {
+              category: "HARM_CATEGORY_DANGEROUS_CONTENT",
+              threshold: "BLOCK_MEDIUM_AND_ABOVE"
+            }
+          ]
         }),
       });
 
       if (!response.ok) {
-        throw new Error(`Gemini API error: ${response.status}`);
+        const errorText = await response.text();
+        throw new Error(`Gemini API error: ${response.status} - ${errorText}`);
       }
 
       const data: GeminiResponse = await response.json();
+      
+      if (!data.candidates || data.candidates.length === 0) {
+        throw new Error('No response generated from Gemini API');
+      }
+
       return data.candidates[0]?.content?.parts[0]?.text || '';
     } catch (error) {
       console.error('Gemini API error:', error);
@@ -54,30 +78,44 @@ export class GeminiAPI {
   }
 
   async generateSQL(description: string, tableContext?: string): Promise<string> {
-    const prompt = `Generate a SQL query based on this description: "${description}"
+    const prompt = `You are an expert SQL developer. Generate a SQL query based on this description: "${description}"
     
     ${tableContext ? `Table context: ${tableContext}` : ''}
     
-    Rules:
-    - Return only the SQL query, no explanations
-    - Use standard SQL syntax
-    - Include proper formatting
+    Requirements:
+    - Return ONLY the SQL query, no explanations or markdown formatting
+    - Use standard SQL syntax that works across different databases
+    - Include proper formatting with line breaks and indentation
     - Use meaningful table/column names if not specified
-    - Add comments for complex queries
+    - Add brief comments for complex queries
+    - Ensure the query is syntactically correct and executable
     
     SQL Query:`;
 
-    return this.generateContent(prompt);
+    const result = await this.generateContent(prompt);
+    
+    // Clean up the response to extract just the SQL
+    return result
+      .replace(/```sql/g, '')
+      .replace(/```/g, '')
+      .replace(/^SQL Query:\s*/i, '')
+      .trim();
   }
 
   async generateRegex(description: string, examples?: string[]): Promise<{ pattern: string; explanation: string }> {
-    const prompt = `Create a regular expression for: "${description}"
+    const prompt = `You are a regex expert. Create a regular expression pattern for: "${description}"
     
-    ${examples ? `Examples to match: ${examples.join(', ')}` : ''}
+    ${examples ? `Examples that should match: ${examples.join(', ')}` : ''}
+    
+    Requirements:
+    - Provide a working regex pattern
+    - Include a clear explanation of what it matches
+    - Use standard regex syntax
+    - Make it as precise as possible
     
     Return in this exact format:
-    PATTERN: [regex pattern]
-    EXPLANATION: [brief explanation of what it matches]`;
+    PATTERN: [regex pattern only]
+    EXPLANATION: [brief explanation of what the pattern matches and how it works]`;
 
     const response = await this.generateContent(prompt);
     
@@ -86,18 +124,26 @@ export class GeminiAPI {
     
     return {
       pattern: patternMatch?.[1]?.trim() || '',
-      explanation: explanationMatch?.[1]?.trim() || ''
+      explanation: explanationMatch?.[1]?.trim() || 'AI-generated regex pattern'
     };
   }
 
   async generateCronExpression(description: string): Promise<{ expression: string; explanation: string }> {
-    const prompt = `Generate a cron expression for: "${description}"
+    const prompt = `You are a cron expert. Generate a cron expression for: "${description}"
+    
+    Requirements:
+    - Use standard 5-field cron format: minute hour day-of-month month day-of-week
+    - Provide a working cron expression
+    - Include a human-readable explanation
     
     Return in this exact format:
-    CRON: [cron expression]
-    EXPLANATION: [human readable explanation]
+    CRON: [5-field cron expression]
+    EXPLANATION: [human readable explanation of when it runs]
     
-    Use standard 5-field cron format (minute hour day month weekday).`;
+    Examples:
+    - "every day at midnight" → CRON: 0 0 * * *
+    - "every Monday at 9 AM" → CRON: 0 9 * * 1
+    - "every 15 minutes" → CRON: */15 * * * *`;
 
     const response = await this.generateContent(prompt);
     
@@ -106,25 +152,31 @@ export class GeminiAPI {
     
     return {
       expression: cronMatch?.[1]?.trim() || '',
-      explanation: explanationMatch?.[1]?.trim() || ''
+      explanation: explanationMatch?.[1]?.trim() || 'AI-generated cron expression'
     };
   }
 
   async optimizeCode(code: string, language: string): Promise<{ optimized: string; improvements: string[] }> {
-    const prompt = `Optimize this ${language} code and suggest improvements:
+    const prompt = `You are a senior software engineer. Analyze and optimize this ${language} code:
 
 \`\`\`${language}
 ${code}
 \`\`\`
 
-Return in this format:
+Requirements:
+- Provide optimized version of the code
+- List specific improvements made
+- Focus on performance, readability, and best practices
+- Maintain the same functionality
+
+Return in this exact format:
 OPTIMIZED:
-[optimized code]
+[optimized code here]
 
 IMPROVEMENTS:
-- [improvement 1]
-- [improvement 2]
-- [improvement 3]`;
+- [specific improvement 1]
+- [specific improvement 2]
+- [specific improvement 3]`;
 
     const response = await this.generateContent(prompt);
     
@@ -144,24 +196,45 @@ IMPROVEMENTS:
   }
 
   async explainCode(code: string, language: string): Promise<string> {
-    const prompt = `Explain this ${language} code in simple terms:
+    const prompt = `You are a programming instructor. Explain this ${language} code in clear, simple terms:
 
 \`\`\`${language}
 ${code}
 \`\`\`
 
-Provide a clear, concise explanation of what this code does, how it works, and any important concepts.`;
+Requirements:
+- Explain what the code does overall
+- Break down key components and logic
+- Mention any important concepts or patterns used
+- Keep the explanation accessible but thorough
+- Use plain language, avoid overly technical jargon
+
+Provide a comprehensive but easy-to-understand explanation:`;
 
     return this.generateContent(prompt);
   }
 
   async generateTestData(schema: string, count: number = 5): Promise<string> {
-    const prompt = `Generate ${count} realistic test data entries based on this schema:
+    const prompt = `You are a test data expert. Generate ${count} realistic test data entries based on this schema or description:
 
 ${schema}
 
-Return as valid JSON array with realistic, diverse data. Make sure all required fields are included.`;
+Requirements:
+- Generate realistic, diverse data
+- Return as valid JSON array
+- Include all required fields
+- Use appropriate data types
+- Make data varied and interesting
+- Ensure data is production-quality realistic
 
-    return this.generateContent(prompt);
+Return only the JSON array, no explanations:`;
+
+    const result = await this.generateContent(prompt);
+    
+    // Clean up the response to extract just the JSON
+    return result
+      .replace(/```json/g, '')
+      .replace(/```/g, '')
+      .trim();
   }
 }
