@@ -26,7 +26,10 @@ import {
   Brain,
   FileText,
   GitCommit,
-  Bug
+  Bug,
+  User,
+  LogOut,
+  Settings
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTheme } from 'next-themes';
@@ -37,6 +40,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import Image from 'next/image';
 
@@ -79,6 +83,7 @@ export function Navigation() {
   const [mounted, setMounted] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [user, setUser] = useState<any>(null);
 
   const logoSrc = `https://res.cloudinary.com/dg8w1kluo/image/upload/v1750086960/DevToolkit_vpwgql.png`;
 
@@ -92,8 +97,25 @@ export function Navigation() {
     window.addEventListener('scroll', handleScroll);
     handleScroll();
     
+    // Check for logged in user
+    const userData = localStorage.getItem('user');
+    if (userData) {
+      try {
+        setUser(JSON.parse(userData));
+      } catch (error) {
+        console.error('Error parsing user data:', error);
+      }
+    }
+    
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setUser(null);
+    window.location.href = '/';
+  };
 
   const ThemeToggle = () => (
     <>
@@ -307,6 +329,43 @@ export function Navigation() {
             })}
             
             {mounted && <ThemeToggle />}
+            
+            {/* User Menu */}
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="rounded-full p-2">
+                    <User className="h-5 w-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <div className="px-3 py-2 border-b">
+                    <p className="text-sm font-medium">{user.email}</p>
+                    <p className="text-xs text-muted-foreground capitalize">{user.role}</p>
+                  </div>
+                  <DropdownMenuItem asChild>
+                    <Link href={user.role === 'admin' ? '/admin' : '/dashboard'}>
+                      <Settings className="h-4 w-4 mr-2" />
+                      {user.role === 'admin' ? 'Admin Panel' : 'Dashboard'}
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout}>
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <div className="flex items-center space-x-2">
+                <Button asChild variant="outline" size="sm">
+                  <Link href="/auth/login">Sign In</Link>
+                </Button>
+                <Button asChild size="sm">
+                  <Link href="/auth/register">Sign Up</Link>
+                </Button>
+              </div>
+            )}
           </div>
 
           {/* Mobile Navigation */}
@@ -334,6 +393,38 @@ export function Navigation() {
                 </SheetHeader>
                 
                 <div className="flex flex-col space-y-6 mt-8">
+                  {/* User Section */}
+                  {user ? (
+                    <div className="p-4 bg-muted/50 rounded-lg">
+                      <div className="flex items-center space-x-3 mb-3">
+                        <User className="h-8 w-8 p-1 bg-primary/10 rounded-full" />
+                        <div>
+                          <p className="font-medium">{user.email}</p>
+                          <p className="text-xs text-muted-foreground capitalize">{user.role}</p>
+                        </div>
+                      </div>
+                      <div className="flex space-x-2">
+                        <Button asChild size="sm" className="flex-1">
+                          <Link href={user.role === 'admin' ? '/admin' : '/dashboard'} onClick={() => setIsOpen(false)}>
+                            {user.role === 'admin' ? 'Admin Panel' : 'Dashboard'}
+                          </Link>
+                        </Button>
+                        <Button onClick={handleLogout} size="sm" variant="outline">
+                          <LogOut className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex space-x-2">
+                      <Button asChild variant="outline" className="flex-1">
+                        <Link href="/auth/login" onClick={() => setIsOpen(false)}>Sign In</Link>
+                      </Button>
+                      <Button asChild className="flex-1">
+                        <Link href="/auth/register" onClick={() => setIsOpen(false)}>Sign Up</Link>
+                      </Button>
+                    </div>
+                  )}
+                  
                   <div className="space-y-2">
                     {[...navItems.filter(item => !item.hasDropdown), ...endNavItems].map((item) => {
                       const IconComponent = item.icon;

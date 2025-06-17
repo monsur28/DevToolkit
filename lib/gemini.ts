@@ -20,9 +20,27 @@ export class GeminiAPI {
     }
   }
 
-  private async makeRequest(prompt: string): Promise<string> {
+  private async makeRequest(prompt: string, userId?: string): Promise<string> {
     if (!this.apiKey || this.apiKey === 'your_gemini_api_key_here') {
       throw new Error('Gemini API key not configured. Please add your API key to .env.local file.');
+    }
+
+    // Check user limits if userId is provided
+    if (userId && typeof window !== 'undefined') {
+      const token = localStorage.getItem('token');
+      if (token) {
+        try {
+          const response = await fetch('/api/user/check-limits', {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          const data = await response.json();
+          if (!data.canUse) {
+            throw new Error(data.reason || 'Usage limit exceeded');
+          }
+        } catch (error) {
+          console.warn('Could not check usage limits:', error);
+        }
+      }
     }
 
     try {
@@ -76,18 +94,65 @@ export class GeminiAPI {
         throw new Error('No response generated from Gemini API');
       }
 
-      return data.candidates[0]?.content?.parts[0]?.text || '';
+      const result = data.candidates[0]?.content?.parts[0]?.text || '';
+
+      // Track usage if userId is provided
+      if (userId && typeof window !== 'undefined') {
+        const token = localStorage.getItem('token');
+        if (token) {
+          try {
+            await fetch('/api/user/track-usage', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+              },
+              body: JSON.stringify({
+                toolName: 'Gemini AI',
+                success: true
+              })
+            });
+          } catch (error) {
+            console.warn('Could not track usage:', error);
+          }
+        }
+      }
+
+      return result;
     } catch (error) {
       console.error('Gemini API request failed:', error);
+      
+      // Track failed usage if userId is provided
+      if (userId && typeof window !== 'undefined') {
+        const token = localStorage.getItem('token');
+        if (token) {
+          try {
+            await fetch('/api/user/track-usage', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+              },
+              body: JSON.stringify({
+                toolName: 'Gemini AI',
+                success: false
+              })
+            });
+          } catch (trackError) {
+            console.warn('Could not track failed usage:', trackError);
+          }
+        }
+      }
+      
       throw error;
     }
   }
 
-  async generateContent(prompt: string): Promise<string> {
-    return this.makeRequest(prompt);
+  async generateContent(prompt: string, userId?: string): Promise<string> {
+    return this.makeRequest(prompt, userId);
   }
 
-  async generateSQL(description: string, tableContext?: string): Promise<string> {
+  async generateSQL(description: string, tableContext?: string, userId?: string): Promise<string> {
     const prompt = `You are an expert SQL developer. Generate a SQL query based on this description: "${description}"
     
     ${tableContext ? `Table context: ${tableContext}` : ''}
@@ -102,7 +167,7 @@ export class GeminiAPI {
     
     SQL Query:`;
 
-    const result = await this.makeRequest(prompt);
+    const result = await this.makeRequest(prompt, userId);
     
     // Clean up the response to extract just the SQL
     return result
@@ -112,7 +177,7 @@ export class GeminiAPI {
       .trim();
   }
 
-  async generateRegex(description: string, examples?: string[]): Promise<{ pattern: string; explanation: string }> {
+  async generateRegex(description: string, examples?: string[], userId?: string): Promise<{ pattern: string; explanation: string }> {
     const prompt = `You are a regex expert. Create a regular expression pattern for: "${description}"
     
     ${examples ? `Examples that should match: ${examples.join(', ')}` : ''}
@@ -127,7 +192,7 @@ export class GeminiAPI {
     PATTERN: [regex pattern only]
     EXPLANATION: [brief explanation of what the pattern matches and how it works]`;
 
-    const response = await this.makeRequest(prompt);
+    const response = await this.makeRequest(prompt, userId);
     
     const patternMatch = response.match(/PATTERN:\s*(.+)/);
     const explanationMatch = response.match(/EXPLANATION:\s*(.+)/);
@@ -138,7 +203,7 @@ export class GeminiAPI {
     };
   }
 
-  async generateCronExpression(description: string): Promise<{ expression: string; explanation: string }> {
+  async generateCronExpression(description: string, userId?: string): Promise<{ expression: string; explanation: string }> {
     const prompt = `You are a cron expert. Generate a cron expression for: "${description}"
     
     Requirements:
@@ -155,7 +220,7 @@ export class GeminiAPI {
     - "every Monday at 9 AM" → CRON: 0 9 * * 1
     - "every 15 minutes" → CRON: */15 * * * *`;
 
-    const response = await this.makeRequest(prompt);
+    const response = await this.makeRequest(prompt, userId);
     
     const cronMatch = response.match(/CRON:\s*(.+)/);
     const explanationMatch = response.match(/EXPLANATION:\s*(.+)/);
@@ -166,7 +231,7 @@ export class GeminiAPI {
     };
   }
 
-  async optimizeCode(code: string, language: string): Promise<{ optimized: string; improvements: string[] }> {
+  async optimizeCode(code: string, language: string, userId?: string): Promise<{ optimized: string; improvements: string[] }> {
     const prompt = `You are a senior software engineer. Analyze and optimize this ${language} code:
 
 \`\`\`${language}
@@ -188,7 +253,7 @@ IMPROVEMENTS:
 - [specific improvement 2]
 - [specific improvement 3]`;
 
-    const response = await this.makeRequest(prompt);
+    const response = await this.makeRequest(prompt, userId);
     
     const optimizedMatch = response.match(/OPTIMIZED:\s*([\s\S]*?)(?=IMPROVEMENTS:|$)/);
     const improvementsMatch = response.match(/IMPROVEMENTS:\s*([\s\S]*)/);
@@ -205,7 +270,7 @@ IMPROVEMENTS:
     };
   }
 
-  async explainCode(code: string, language: string): Promise<string> {
+  async explainCode(code: string, language: string, userId?: string): Promise<string> {
     const prompt = `You are a programming instructor. Explain this ${language} code in clear, simple terms:
 
 \`\`\`${language}
@@ -221,10 +286,10 @@ Requirements:
 
 Provide a comprehensive but easy-to-understand explanation:`;
 
-    return this.makeRequest(prompt);
+    return this.makeRequest(prompt, userId);
   }
 
-  async generateTestData(schema: string, count: number = 5): Promise<string> {
+  async generateTestData(schema: string, count: number = 5, userId?: string): Promise<string> {
     const prompt = `You are a test data expert. Generate ${count} realistic test data entries based on this schema or description:
 
 ${schema}
@@ -239,7 +304,7 @@ Requirements:
 
 Return only the JSON array, no explanations:`;
 
-    const result = await this.makeRequest(prompt);
+    const result = await this.makeRequest(prompt, userId);
     
     // Clean up the response to extract just the JSON
     return result
@@ -248,7 +313,7 @@ Return only the JSON array, no explanations:`;
       .trim();
   }
 
-  async findBugs(code: string): Promise<{ bugs: any[]; qualityScore: number }> {
+  async findBugs(code: string, userId?: string): Promise<{ bugs: any[]; qualityScore: number }> {
     const prompt = `You are a senior code reviewer. Analyze this code for bugs, security issues, and bad practices:
 
 \`\`\`
@@ -277,7 +342,7 @@ Return in this exact JSON format:
   "qualityScore": 75
 }`;
 
-    const response = await this.makeRequest(prompt);
+    const response = await this.makeRequest(prompt, userId);
     
     try {
       // Extract JSON from the response
@@ -298,7 +363,7 @@ Return in this exact JSON format:
     }
   }
 
-  async generateCommitMessages(diff: string, context?: string, type?: string): Promise<any[]> {
+  async generateCommitMessages(diff: string, context?: string, type?: string, userId?: string): Promise<any[]> {
     const prompt = `You are a Git expert. Generate conventional commit messages based on this diff:
 
 \`\`\`
@@ -329,7 +394,7 @@ Return in this exact JSON format:
   }
 ]`;
 
-    const response = await this.makeRequest(prompt);
+    const response = await this.makeRequest(prompt, userId);
     
     try {
       // Extract JSON from the response
@@ -345,7 +410,7 @@ Return in this exact JSON format:
     }
   }
 
-  async generateReadme(projectInfo: any, sections: string[], template: string): Promise<string> {
+  async generateReadme(projectInfo: any, sections: string[], template: string, userId?: string): Promise<string> {
     const prompt = `You are a technical documentation expert. Generate a professional README.md for this project:
 
 Project Name: ${projectInfo.name}
@@ -372,10 +437,10 @@ Requirements:
 
 Return only the README content in Markdown format:`;
 
-    return this.makeRequest(prompt);
+    return this.makeRequest(prompt, userId);
   }
 
-  async analyzeAPIResponse(response: string): Promise<string> {
+  async analyzeAPIResponse(response: string, userId?: string): Promise<string> {
     const prompt = `You are an API expert. Analyze this API response and provide a clear summary:
 
 \`\`\`
@@ -391,10 +456,10 @@ Requirements:
 
 Provide a clear, concise analysis:`;
 
-    return this.makeRequest(prompt);
+    return this.makeRequest(prompt, userId);
   }
 
-  async answerTechQuestion(question: string): Promise<string> {
+  async answerTechQuestion(question: string, userId?: string): Promise<string> {
     const prompt = `You are a senior software developer and technical educator. Answer this programming or technology question:
 
 Question: ${question}
@@ -409,6 +474,6 @@ Requirements:
 
 Your answer:`;
 
-    return this.makeRequest(prompt);
+    return this.makeRequest(prompt, userId);
   }
 }
