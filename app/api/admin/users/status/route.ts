@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { headers } from 'next/headers';
 import { AuthService } from '@/lib/auth-service';
 import { ObjectId } from 'mongodb';
 
 export async function POST(request: NextRequest) {
   try {
-    const headersList = headers();
-    const authHeader = headersList.get('authorization');
+    const authHeader = request.headers.get('authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return NextResponse.json(
         { success: false, message: 'Unauthorized' },

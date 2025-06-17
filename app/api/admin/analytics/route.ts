@@ -1,13 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { headers } from 'next/headers';
 import { AuthService } from '@/lib/auth-service';
-import { AnalyticsService } from '@/lib/services/AnalyticsService';
 import { getCollection } from '@/lib/mongodb';
 
 export async function GET(request: NextRequest) {
   try {
-    const headersList = headers();
-    const authHeader = headersList.get('authorization');
+    const authHeader = request.headers.get('authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return NextResponse.json(
         { success: false, message: 'Unauthorized' },
@@ -28,15 +25,11 @@ export async function GET(request: NextRequest) {
     // Get today's date for analytics
     const today = new Date().toISOString().split('T')[0];
     
-    // Generate or get today's analytics
-    const analytics = await AnalyticsService.generateDailyAnalytics(today);
-    
-    // Get additional real-time metrics
+    // Get user counts
     const usersCollection = await getCollection('users');
     const usageCollection = await getCollection('usageAnalytics');
     const suggestionsCollection = await getCollection('suggestions');
     
-    // Get user counts
     const totalUsers = await usersCollection.countDocuments();
     const activeUsers = await usersCollection.countDocuments({ 'status.isActive': true });
     const verifiedUsers = await usersCollection.countDocuments({ 'authentication.isVerified': true });
@@ -44,6 +37,8 @@ export async function GET(request: NextRequest) {
     // Get usage stats for last 30 days
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    const totalUsage = await usageCollection.countDocuments({ timestamp: { $gte: thirtyDaysAgo } });
     
     const recentUsage = await usageCollection
       .find({ timestamp: { $gte: thirtyDaysAgo } })
@@ -77,28 +72,26 @@ export async function GET(request: NextRequest) {
     // Get suggestion stats
     const pendingSuggestions = await suggestionsCollection.countDocuments({ status: 'pending' });
     
-    const enhancedAnalytics = {
-      ...analytics,
-      realTimeMetrics: {
-        totalUsers,
-        activeUsers,
-        verifiedUsers,
-        pendingSuggestions,
-        toolUsage: toolUsage.reduce((acc, tool) => {
-          acc[tool.toolName || 'Unknown'] = tool.count;
-          return acc;
-        }, {} as Record<string, number>),
-        recentUsage: recentUsage.map(usage => ({
-          toolName: 'Tool Usage',
-          timestamp: usage.timestamp,
-          success: usage.usage?.success || false
-        }))
-      }
+    const analytics = {
+      totalUsers,
+      activeUsers,
+      verifiedUsers,
+      totalUsage,
+      pendingSuggestions,
+      toolUsage: toolUsage.reduce((acc, tool) => {
+        acc[tool.toolName || 'Unknown'] = tool.count;
+        return acc;
+      }, {} as Record<string, number>),
+      recentUsage: recentUsage.map(usage => ({
+        toolName: usage.toolName || 'Unknown Tool',
+        timestamp: usage.timestamp,
+        success: usage.success || false
+      }))
     };
     
     return NextResponse.json({
       success: true,
-      analytics: enhancedAnalytics
+      analytics
     });
   } catch (error) {
     console.error('Get analytics error:', error);
