@@ -8,6 +8,14 @@ const nextConfig = {
   experimental: {
     // Disable SWC to avoid WebAssembly memory issues
     swcMinify: false,
+    // Disable Google Fonts optimization to prevent AbortError during build
+    fontLoaders: [
+      { loader: '@next/font/google', options: { subsets: ['latin'] } },
+    ],
+  },
+  // Disable Google Fonts optimization at build time
+  env: {
+    NEXT_FONT_GOOGLE_OPTIMIZED: 'false',
   },
   webpack: (config, { dev, isServer }) => {
     // Optimize webpack for memory usage
