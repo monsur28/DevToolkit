@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getCollection } from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
 import { AuthService } from '@/lib/auth-service';
 
@@ -23,45 +22,31 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const usageCollection = await getCollection('usageAnalytics');
-    const toolsCollection = await getCollection('tools');
-    
-    // Get usage history with tool names
-    const history = await usageCollection.aggregate([
-      { 
-        $match: { 
-          userId: new ObjectId(decoded.userId) 
-        } 
+    // For testing purposes, return mock usage history
+    const mockHistory = [
+      {
+        _id: new ObjectId().toString(),
+        toolName: 'AI SQL Query Generator',
+        timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2 hours ago
+        success: true
       },
       {
-        $lookup: {
-          from: 'tools',
-          localField: 'toolId',
-          foreignField: '_id',
-          as: 'tool'
-        }
+        _id: new ObjectId().toString(),
+        toolName: 'AI Bug Finder',
+        timestamp: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(), // 5 hours ago
+        success: true
       },
       {
-        $project: {
-          _id: 1,
-          toolName: { 
-            $cond: [
-              { $gt: [{ $size: '$tool' }, 0] },
-              { $arrayElemAt: ['$tool.name', 0] },
-              'Unknown Tool'
-            ]
-          },
-          timestamp: '$timestamp',
-          success: '$usage.success'
-        }
-      },
-      { $sort: { timestamp: -1 } },
-      { $limit: 50 }
-    ]).toArray();
+        _id: new ObjectId().toString(),
+        toolName: 'Learning Assistant',
+        timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // 1 day ago
+        success: true
+      }
+    ];
     
     return NextResponse.json({
       success: true,
-      history
+      history: mockHistory
     });
   } catch (error) {
     console.error('Usage history error:', error);

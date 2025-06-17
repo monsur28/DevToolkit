@@ -23,12 +23,14 @@ export function middleware(request: NextRequest) {
     '/_next/',
     '/favicon.ico',
     '/tools/',
+    '/images/',
+    '/assets/',
   ].some(prefix => path.startsWith(prefix));
   
   // Check if the path is public
   const isPublicPath = publicPaths.includes(path) || isPublicPathPrefix;
   
-  // Get the token from cookies or localStorage
+  // Get the token from cookies
   const token = request.cookies.get('token')?.value;
   
   // If the path is not public and there's no token, redirect to login
@@ -48,10 +50,13 @@ export function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     /*
-     * Match all request paths except:
-     * 1. All API routes that don't require auth
-     * 2. Static files like images, fonts, etc.
+     * Match all request paths except for:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - images (public image files)
+     * - assets (public asset files)
      */
-    '/((?!_next/static|_next/image|favicon.ico).*)',
+    '/((?!_next/static|_next/image|favicon.ico|images|assets).*)',
   ],
 };
