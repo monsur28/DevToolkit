@@ -3,85 +3,94 @@
 import Link from 'next/link';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { 
-  FileText, 
-  Key, 
-  Shield, 
-  Hash,
-  Wrench,
   ArrowRight,
   Sparkles,
   Zap,
-  Code,
   Users,
   Star,
   TrendingUp,
   Palette,
   Calculator,
-  Monitor
+  Monitor,
+  Database,
+  Search,
+  Calendar,
+  Shuffle,
+  Send,
+  Brain,
+  Rocket,
+  Code,
+  Globe
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 const featuredTools = [
   {
-    name: 'JSON Formatter',
-    description: 'Format, validate, and beautify JSON data with syntax highlighting',
-    icon: FileText,
-    href: '/tools/json-formatter',
+    name: 'AI SQL Query Generator',
+    description: 'Generate complex SQL queries from natural language using Gemini AI',
+    icon: Database,
+    href: '/tools/sql-query-generator',
+    color: 'text-blue-500',
+    bgColor: 'bg-blue-500/10',
+    borderColor: 'border-blue-500/20',
+    aiPowered: true
+  },
+  {
+    name: 'AI Regex Generator',
+    description: 'Create regex patterns from descriptions with AI-powered explanations',
+    icon: Search,
+    href: '/tools/regex-tester',
+    color: 'text-red-500',
+    bgColor: 'bg-red-500/10',
+    borderColor: 'border-red-500/20',
+    aiPowered: true
+  },
+  {
+    name: 'AI Cron Generator', 
+    description: 'Build cron expressions from natural language with intelligent scheduling',
+    icon: Calendar,
+    href: '/tools/cron-generator',
+    color: 'text-amber-500',
+    bgColor: 'bg-amber-500/10',
+    borderColor: 'border-amber-500/20',
+    aiPowered: true
+  },
+  {
+    name: 'AI Code Optimizer',
+    description: 'Optimize and explain code with AI-powered analysis and improvements',
+    icon: Zap,
+    href: '/tools/code-formatter',
+    color: 'text-emerald-500',
+    bgColor: 'bg-emerald-500/10',
+    borderColor: 'border-emerald-500/20',
+    aiPowered: true
+  },
+  {
+    name: 'AI Data Generator',
+    description: 'Generate realistic test data from schema descriptions using AI',
+    icon: Shuffle,
+    href: '/tools/faker-data-generator',
+    color: 'text-green-500',
+    bgColor: 'bg-green-500/10',
+    borderColor: 'border-green-500/20',
+    aiPowered: true
+  },
+  {
+    name: 'REST API Client',
+    description: 'Test REST APIs with full HTTP method support and response analysis',
+    icon: Send,
+    href: '/tools/rest-client',
     color: 'text-blue-500',
     bgColor: 'bg-blue-500/10',
     borderColor: 'border-blue-500/20'
-  },
-  {
-    name: 'JWT Decoder & Creator',
-    description: 'Decode and inspect JWT tokens with detailed analysis',
-    icon: Shield,
-    href: '/tools/jwt-decoder',
-    color: 'text-purple-500',
-    bgColor: 'bg-purple-500/10',
-    borderColor: 'border-purple-500/20'
-  },
-  {
-    name: 'CSS Gradient Generator', 
-    description: 'Create beautiful CSS gradients with advanced controls',
-    icon: Palette,
-    href: '/tools/css-gradient-generator',
-    color: 'text-purple-600',
-    bgColor: 'bg-purple-600/10',
-    borderColor: 'border-purple-600/20'
-  },
-  {
-    name: 'PX to REM Converter',
-    description: 'Convert pixel values to REM units with bulk conversion',
-    icon: Calculator,
-    href: '/tools/px-to-rem-converter',
-    color: 'text-green-600',
-    bgColor: 'bg-green-600/10',
-    borderColor: 'border-green-600/20'
-  },
-  {
-    name: 'Responsive Design Tester',
-    description: 'Test websites across multiple device viewports',
-    icon: Monitor,
-    href: '/tools/responsive-design-tester',
-    color: 'text-blue-600',
-    bgColor: 'bg-blue-600/10',
-    borderColor: 'border-blue-600/20'
-  },
-  {
-    name: 'Base64 Encoder/Decoder',
-    description: 'Encode and decode Base64 strings with ease',
-    icon: Key,
-    href: '/tools/base64',
-    color: 'text-green-500',
-    bgColor: 'bg-green-500/10',
-    borderColor: 'border-green-500/20'
   }
 ];
 
 const stats = [
-  { label: 'Developer Tools', value: '20+', icon: Wrench },
-  { label: 'Lines of Code Processed', value: '50k+', icon: Code },
+  { label: 'AI-Powered Tools', value: '5', icon: Brain },
+  { label: 'Total Tools', value: '9', icon: Code },
   { label: 'Happy Developers', value: '10K+', icon: Users },
   { label: 'GitHub Stars', value: '50+', icon: Star }
 ];
@@ -108,37 +117,38 @@ export default function Home() {
           <div className="text-center max-w-5xl mx-auto">
             {/* Animated Background Elements */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
-              <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-full blur-3xl animate-pulse" />
-              <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-gradient-to-r from-green-500/10 to-blue-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
-              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-128 h-128 bg-gradient-to-r from-purple-500/5 to-pink-500/5 rounded-full blur-3xl animate-pulse delay-2000" />
+              <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-gradient-to-r from-purple-500/10 to-blue-500/10 rounded-full blur-3xl animate-pulse" />
+              <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
+              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-128 h-128 bg-gradient-to-r from-pink-500/5 to-purple-500/5 rounded-full blur-3xl animate-pulse delay-2000" />
             </div>
 
             <div className={`relative z-10 transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
               <div className="flex items-center justify-center mb-8">
                 <div className="relative">
-                  <Wrench className="h-16 w-16 text-primary animate-bounce" />
-                  <div className="absolute inset-0 h-16 w-16 text-primary/20 animate-ping" />
+                  <Brain className="h-16 w-16 text-purple-500 animate-bounce" />
+                  <div className="absolute inset-0 h-16 w-16 text-purple-500/20 animate-ping" />
                   <Sparkles className="absolute -top-2 -right-2 h-6 w-6 text-yellow-500 animate-pulse" />
                 </div>
               </div>
 
-              <h1 className="text-5xl lg:text-7xl font-bold mb-6 bg-gradient-to-r from-primary via-blue-600 to-purple-600 bg-clip-text text-transparent whitespace-nowrap overflow-hidden border-r-4 border-white animate-typing">
-                DevToolkit
+              <h1 className="text-5xl lg:text-7xl font-bold mb-6 bg-gradient-to-r from-purple-600 via-blue-600 to-emerald-600 bg-clip-text text-transparent">
+                AI-Enhanced DevToolkit
               </h1>
               
               <p className="text-xl lg:text-2xl text-muted-foreground mb-8 max-w-4xl mx-auto leading-relaxed">
-                Your ultimate toolkit for development productivity. 
-                <span className="text-primary font-semibold"> Beautiful</span>, 
-                <span className="text-blue-600 font-semibold"> fast</span>, and 
-                <span className="text-purple-600 font-semibold"> powerful</span> utilities 
-                at your fingertips.
+                Next-generation developer tools powered by <span className="text-purple-600 font-semibold">Gemini AI</span>. 
+                <span className="text-blue-600 font-semibold"> Intelligent</span>, 
+                <span className="text-emerald-600 font-semibold"> fast</span>, and 
+                <span className="text-pink-600 font-semibold"> powerful</span> utilities 
+                for modern development workflows.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
                 <Link href="/tools">
-                  <Button size="lg" className="group relative overflow-hidden bg-gradient-to-r from-primary to-blue-600 hover:from-blue-600 hover:to-purple-600 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl">
+                  <Button size="lg" className="group relative overflow-hidden bg-gradient-to-r from-purple-600 to-blue-600 hover:from-blue-600 hover:to-emerald-600 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl">
                     <span className="relative z-10 flex items-center">
-                      Explore Tools
+                      <Brain className="mr-2 h-5 w-5" />
+                      Explore AI Tools
                       <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                     </span>
                     <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -146,14 +156,14 @@ export default function Home() {
                 </Link>
                 
                 <Link href="/about">
-                  <Button variant="outline" size="lg" className="group transition-all duration-300 hover:scale-105 hover:border-primary/50">
+                  <Button variant="outline" size="lg" className="group transition-all duration-300 hover:scale-105 hover:border-purple-500/50">
                     <Sparkles className="mr-2 h-4 w-4 group-hover:animate-spin" />
                     Learn More
                   </Button>
                 </Link>
               </div>
 
-              {/* Animated Stats */}
+              {/* Enhanced Stats */}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 max-w-4xl mx-auto">
                 {stats.map((stat, index) => {
                   const IconComponent = stat.icon;
@@ -162,12 +172,12 @@ export default function Home() {
                       key={index}
                       className={`text-center p-4 rounded-lg transition-all duration-500 ${
                         currentStat === index 
-                          ? 'bg-primary/10 border border-primary/20 scale-105' 
+                          ? 'bg-gradient-to-r from-purple-500/10 to-blue-500/10 border border-purple-500/20 scale-105' 
                           : 'bg-muted/50 hover:bg-muted/80'
                       }`}
                     >
                       <IconComponent className={`h-6 w-6 mx-auto mb-2 ${
-                        currentStat === index ? 'text-primary animate-pulse' : 'text-muted-foreground'
+                        currentStat === index ? 'text-purple-500 animate-pulse' : 'text-muted-foreground'
                       }`} />
                       <div className="text-2xl font-bold text-foreground">{stat.value}</div>
                       <div className="text-sm text-muted-foreground">{stat.label}</div>
@@ -185,10 +195,10 @@ export default function Home() {
         <div className="container mx-auto px-4">
           <div className={`text-center mb-16 transition-all duration-1000 delay-300 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
             <h2 className="text-3xl lg:text-4xl font-bold mb-4 bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
-              Featured Tools
+              AI-Powered Developer Tools
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Discover our most popular developer utilities, crafted for efficiency and ease of use.
+              Experience the future of development with our intelligent tools powered by Gemini AI.
             </p>
           </div>
 
@@ -203,11 +213,25 @@ export default function Home() {
                   }`}
                 >
                   <Link href={tool.href}>
-                    <Card className={`group hover:shadow-xl transition-all duration-300 hover:-translate-y-2 cursor-pointer border-2 hover:${tool.borderColor} h-full ${tool.bgColor} backdrop-blur-sm`}>
+                    <Card className={`group hover:shadow-xl transition-all duration-300 hover:-translate-y-2 cursor-pointer border-2 hover:${tool.borderColor} h-full ${tool.bgColor} backdrop-blur-sm relative overflow-hidden`}>
+                      {tool.aiPowered && (
+                        <div className="absolute top-3 right-3">
+                          <Badge variant="secondary" className="bg-purple-500/10 text-purple-600 border-purple-500/20">
+                            <Sparkles className="h-3 w-3 mr-1" />
+                            AI
+                          </Badge>
+                        </div>
+                      )}
+                      
                       <CardHeader className="text-center p-6">
                         <div className="flex justify-center mb-4">
-                          <div className={`p-4 rounded-full ${tool.bgColor} group-hover:scale-110 transition-all duration-300 shadow-lg`}>
+                          <div className={`p-4 rounded-full ${tool.bgColor} group-hover:scale-110 transition-all duration-300 shadow-lg relative`}>
                             <IconComponent className={`h-8 w-8 ${tool.color} group-hover:animate-pulse`} />
+                            {tool.aiPowered && (
+                              <div className="absolute -top-1 -right-1">
+                                <Sparkles className="h-4 w-4 text-purple-500 animate-pulse" />
+                              </div>
+                            )}
                           </div>
                         </div>
                         <CardTitle className="text-lg mb-2 group-hover:text-primary transition-colors">
@@ -226,8 +250,8 @@ export default function Home() {
 
           <div className={`text-center mt-12 transition-all duration-1000 delay-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
             <Link href="/tools">
-              <Button variant="outline" size="lg" className="group transition-all duration-300 hover:scale-105 hover:bg-primary hover:text-primary-foreground">
-                View All Tools
+              <Button variant="outline" size="lg" className="group transition-all duration-300 hover:scale-105 hover:bg-purple-600 hover:text-white hover:border-purple-600">
+                View All AI Tools
                 <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
               </Button>
             </Link>
@@ -235,23 +259,43 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Call to Action Section */}
+      {/* AI Features Section */}
       <section className="py-20 relative">
         <div className="container mx-auto px-4">
           <div className={`text-center max-w-4xl mx-auto transition-all duration-1000 delay-500 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-            <div className="bg-gradient-to-r from-primary/10 via-blue-500/10 to-purple-500/10 rounded-3xl p-12 backdrop-blur-sm border border-primary/20">
-              <Zap className="h-12 w-12 text-primary mx-auto mb-6 animate-pulse" />
-              <h3 className="text-3xl font-bold mb-4 bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
-                Ready to boost your productivity?
+            <div className="bg-gradient-to-r from-purple-500/10 via-blue-500/10 to-emerald-500/10 rounded-3xl p-12 backdrop-blur-sm border border-purple-500/20">
+              <Brain className="h-12 w-12 text-purple-500 mx-auto mb-6 animate-pulse" />
+              <h3 className="text-3xl font-bold mb-4 bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+                Powered by Gemini AI
               </h3>
               <p className="text-lg text-muted-foreground mb-8">
-                Join thousands of developers who trust DevToolkit for their daily workflow.
-                Free, fast, and always improving.
+                Experience intelligent automation, natural language processing, and AI-powered optimization.
+                Our tools learn and adapt to provide better results with every use.
               </p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div className="text-center">
+                  <Rocket className="h-8 w-8 text-purple-500 mx-auto mb-2" />
+                  <h4 className="font-semibold mb-1">10x Faster</h4>
+                  <p className="text-sm text-muted-foreground">AI-powered automation speeds up your workflow</p>
+                </div>
+                <div className="text-center">
+                  <Brain className="h-8 w-8 text-blue-500 mx-auto mb-2" />
+                  <h4 className="font-semibold mb-1">Intelligent</h4>
+                  <p className="text-sm text-muted-foreground">Natural language understanding for complex tasks</p>
+                </div>
+                <div className="text-center">
+                  <Globe className="h-8 w-8 text-emerald-500 mx-auto mb-2" />
+                  <h4 className="font-semibold mb-1">Always Learning</h4>
+                  <p className="text-sm text-muted-foreground">Continuously improving with latest AI models</p>
+                </div>
+              </div>
+              
               <Link href="/tools">
-                <Button size="lg" className="group bg-gradient-to-r from-primary to-blue-600 hover:from-blue-600 hover:to-purple-600 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl">
+                <Button size="lg" className="group bg-gradient-to-r from-purple-600 to-blue-600 hover:from-blue-600 hover:to-emerald-600 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl">
                   <span className="flex items-center">
-                    Get Started Now
+                    <Brain className="mr-2 h-5 w-5" />
+                    Try AI Tools Now
                     <Sparkles className="ml-2 h-4 w-4 group-hover:animate-spin" />
                   </span>
                 </Button>

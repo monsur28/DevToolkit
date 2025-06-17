@@ -7,16 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
-  FileText, 
-  Key, 
-  Shield, 
-  Hash,
   Search,
   Terminal,
-  GitCompare,
-  Clock,
-  FileCode,
-  Eye,
   Calendar,
   Zap,
   Grid3X3,
@@ -25,18 +17,17 @@ import {
   Palette,
   Calculator,
   Monitor,
-  Mail,
   Shuffle,
   Database,
-  Send
+  Send,
+  Sparkles,
+  Brain
 } from 'lucide-react';
 
 const categories = [
   { id: 'all', name: 'All Tools', color: 'bg-primary/10 text-primary' },
-  { id: 'data', name: 'Data Processing', color: 'bg-blue-500/10 text-blue-600' },
-  { id: 'security', name: 'Security', color: 'bg-purple-500/10 text-purple-600' },
+  { id: 'ai-powered', name: 'AI-Powered', color: 'bg-purple-500/10 text-purple-600' },
   { id: 'development', name: 'Development', color: 'bg-green-500/10 text-green-600' },
-  { id: 'conversion', name: 'Conversion', color: 'bg-orange-500/10 text-orange-600' },
   { id: 'design', name: 'Design & CSS', color: 'bg-cyan-500/10 text-cyan-600' },
   { id: 'generators', name: 'Generators', color: 'bg-emerald-500/10 text-emerald-600' },
   { id: 'api', name: 'API Tools', color: 'bg-indigo-500/10 text-indigo-600' }
@@ -44,140 +35,68 @@ const categories = [
 
 const tools = [
   {
-    name: 'JSON Formatter',
-    description: 'Format, validate, and beautify JSON data with syntax highlighting and error detection',
-    icon: FileText,
-    href: '/tools/json-formatter',
+    name: 'AI SQL Query Generator',
+    description: 'Generate complex SQL queries from natural language using Gemini AI',
+    icon: Database,
+    href: '/tools/sql-query-generator',
     color: 'text-blue-500',
     bgColor: 'bg-blue-500/10',
     borderColor: 'border-blue-500/20',
-    category: 'data',
-    tags: ['json', 'format', 'validate', 'syntax']
+    category: 'ai-powered',
+    tags: ['sql', 'ai', 'database', 'gemini', 'natural language'],
+    aiPowered: true
   },
   {
-    name: 'JWT Decoder & Creator',
-    description: 'Decode, create, sign, and validate JWT tokens with comprehensive key management support',
-    icon: Shield,
-    href: '/tools/jwt-decoder',
-    color: 'text-purple-500',
-    bgColor: 'bg-purple-500/10',
-    borderColor: 'border-purple-500/20',
-    category: 'security',
-    tags: ['jwt', 'token', 'decode', 'create', 'sign', 'validate', 'security']
-  },
-  {
-    name: 'Base64 Encoder/Decoder',
-    description: 'Encode and decode Base64 strings with ease',
-    icon: Key,
-    href: '/tools/base64',
-    color: 'text-green-500',
-    bgColor: 'bg-green-500/10',
-    borderColor: 'border-green-500/20',
-    category: 'conversion',
-    tags: ['base64', 'encode', 'decode', 'binary']
-  },
-  {
-    name: 'UUID Generator',
-    description: 'Generate universally unique identifiers in various formats with bulk generation support',
-    icon: Hash,
-    href: '/tools/uuid-generator',
-    color: 'text-orange-500',
-    bgColor: 'bg-orange-500/10',
-    borderColor: 'border-orange-500/20',
-    category: 'generators',
-    tags: ['uuid', 'generate', 'unique', 'identifier']
-  },
-  {
-    name: 'Regex Tester',
-    description: 'Test and validate regular expressions with live matching and detailed match analysis',
+    name: 'AI Regex Generator',
+    description: 'Create regex patterns from descriptions with AI-powered explanations',
     icon: Search,
     href: '/tools/regex-tester',
     color: 'text-red-500',
     bgColor: 'bg-red-500/10',
     borderColor: 'border-red-500/20',
-    category: 'development',
-    tags: ['regex', 'pattern', 'match', 'test']
+    category: 'ai-powered',
+    tags: ['regex', 'ai', 'pattern', 'gemini', 'smart'],
+    aiPowered: true
   },
   {
-    name: 'cURL to JavaScript',
-    description: 'Convert cURL commands to JavaScript fetch or axios code snippets instantly',
-    icon: Terminal,
-    href: '/tools/curl-converter',
-    color: 'text-cyan-500',
-    bgColor: 'bg-cyan-500/10',
-    borderColor: 'border-cyan-500/20',
-    category: 'development',
-    tags: ['curl', 'javascript', 'fetch', 'axios']
-  },
-  {
-    name: 'Code Diff Viewer',
-    description: 'Compare code blocks with line-by-line difference highlighting and analysis',
-    icon: GitCompare,
-    href: '/tools/diff-viewer',
-    color: 'text-indigo-500',
-    bgColor: 'bg-indigo-500/10',
-    borderColor: 'border-indigo-500/20',
-    category: 'development',
-    tags: ['diff', 'compare', 'code', 'changes']
-  },
-  {
-    name: 'Timestamp Converter',
-    description: 'Convert Unix timestamps to human-readable dates and vice versa with multiple formats',
-    icon: Clock,
-    href: '/tools/timestamp-converter',
-    color: 'text-pink-500',
-    bgColor: 'bg-pink-500/10',
-    borderColor: 'border-pink-500/20',
-    category: 'conversion',
-    tags: ['timestamp', 'unix', 'date', 'time']
-  },
-  {
-    name: 'YAML ⇄ JSON Converter',
-    description: 'Bi-directional conversion between YAML and JSON formats with live preview',
-    icon: FileCode,
-    href: '/tools/yaml-json-converter',
-    color: 'text-teal-500',
-    bgColor: 'bg-teal-500/10',
-    borderColor: 'border-teal-500/20',
-    category: 'conversion',
-    tags: ['yaml', 'json', 'convert', 'format']
-  },
-  {
-    name: 'Markdown Previewer',
-    description: 'Write markdown and see live rendered preview with syntax highlighting support',
-    icon: Eye,
-    href: '/tools/markdown-previewer',
-    color: 'text-violet-500',
-    bgColor: 'bg-violet-500/10',
-    borderColor: 'border-violet-500/20',
-    category: 'development',
-    tags: ['markdown', 'preview', 'render', 'documentation']
-  },
-  {
-    name: 'Cron Expression Generator',
-    description: 'Build cron expressions with intuitive UI and natural language descriptions',
+    name: 'AI Cron Generator',
+    description: 'Build cron expressions from natural language with intelligent scheduling',
     icon: Calendar,
     href: '/tools/cron-generator',
     color: 'text-amber-500',
     bgColor: 'bg-amber-500/10',
     borderColor: 'border-amber-500/20',
-    category: 'generators',
-    tags: ['cron', 'schedule', 'expression', 'time']
+    category: 'ai-powered',
+    tags: ['cron', 'ai', 'schedule', 'gemini', 'automation'],
+    aiPowered: true
   },
   {
-    name: 'Code Minifier/Prettifier',
-    description: 'Minify or beautify JavaScript, JSON, and CSS code with advanced formatting options',
+    name: 'AI Code Optimizer',
+    description: 'Optimize and explain code with AI-powered analysis and improvements',
     icon: Zap,
     href: '/tools/code-formatter',
     color: 'text-emerald-500',
     bgColor: 'bg-emerald-500/10',
     borderColor: 'border-emerald-500/20',
-    category: 'development',
-    tags: ['minify', 'prettify', 'format', 'javascript', 'css']
+    category: 'ai-powered',
+    tags: ['code', 'ai', 'optimize', 'gemini', 'analysis'],
+    aiPowered: true
+  },
+  {
+    name: 'AI Data Generator',
+    description: 'Generate realistic test data from schema descriptions using AI',
+    icon: Shuffle,
+    href: '/tools/faker-data-generator',
+    color: 'text-green-500',
+    bgColor: 'bg-green-500/10',
+    borderColor: 'border-green-500/20',
+    category: 'ai-powered',
+    tags: ['data', 'ai', 'generator', 'gemini', 'testing'],
+    aiPowered: true
   },
   {
     name: 'CSS Gradient Generator',
-    description: 'Create beautiful CSS gradients with advanced controls, color stops, and real-time preview',
+    description: 'Create beautiful CSS gradients with advanced controls and real-time preview',
     icon: Palette,
     href: '/tools/css-gradient-generator',
     color: 'text-purple-600',
@@ -187,19 +106,8 @@ const tools = [
     tags: ['css', 'gradient', 'design', 'colors', 'linear', 'radial']
   },
   {
-    name: 'PX to REM Converter',
-    description: 'Convert pixel values to REM units with bulk conversion and customizable base font size',
-    icon: Calculator,
-    href: '/tools/px-to-rem-converter',
-    color: 'text-green-600',
-    bgColor: 'bg-green-600/10',
-    borderColor: 'border-green-600/20',
-    category: 'design',
-    tags: ['px', 'rem', 'convert', 'css', 'responsive', 'units']
-  },
-  {
     name: 'Responsive Design Tester',
-    description: 'Test websites across multiple device viewports with synchronized scrolling and screenshots',
+    description: 'Test websites across multiple device viewports with synchronized scrolling',
     icon: Monitor,
     href: '/tools/responsive-design-tester',
     color: 'text-blue-600',
@@ -218,61 +126,6 @@ const tools = [
     borderColor: 'border-pink-500/20',
     category: 'design',
     tags: ['color', 'palette', 'extract', 'image', 'design', 'harmony']
-  },
-  {
-    name: 'HTML Email Tester',
-    description: 'Test HTML email rendering across different email clients with responsive design and dark mode',
-    icon: Mail,
-    href: '/tools/html-email-tester',
-    color: 'text-blue-500',
-    bgColor: 'bg-blue-500/10',
-    borderColor: 'border-blue-500/20',
-    category: 'development',
-    tags: ['html', 'email', 'test', 'responsive', 'dark mode', 'clients']
-  },
-  {
-    name: 'Faker Data Generator',
-    description: 'Generate realistic fake data for testing, including names, emails, addresses, and Lorem Ipsum',
-    icon: Shuffle,
-    href: '/tools/faker-data-generator',
-    color: 'text-green-500',
-    bgColor: 'bg-green-500/10',
-    borderColor: 'border-green-500/20',
-    category: 'generators',
-    tags: ['fake', 'data', 'generator', 'testing', 'lorem', 'names', 'emails']
-  },
-  {
-    name: 'SQL Query Generator',
-    description: 'Generate SQL queries from natural language descriptions with AI-powered assistance',
-    icon: Database,
-    href: '/tools/sql-query-generator',
-    color: 'text-blue-500',
-    bgColor: 'bg-blue-500/10',
-    borderColor: 'border-blue-500/20',
-    category: 'development',
-    tags: ['sql', 'query', 'generator', 'database', 'ai', 'natural language']
-  },
-  {
-    name: 'Hash Generator & Verifier',
-    description: 'Generate MD5, SHA1, SHA256, and SHA512 hashes for text and files with verification',
-    icon: Hash,
-    href: '/tools/hash-generator',
-    color: 'text-emerald-500',
-    bgColor: 'bg-emerald-500/10',
-    borderColor: 'border-emerald-500/20',
-    category: 'security',
-    tags: ['hash', 'md5', 'sha1', 'sha256', 'sha512', 'verify', 'checksum']
-  },
-  {
-    name: 'Password Generator',
-    description: 'Generate secure, customizable passwords with strength analysis and bulk generation',
-    icon: Key,
-    href: '/tools/password-generator',
-    color: 'text-blue-500',
-    bgColor: 'bg-blue-500/10',
-    borderColor: 'border-blue-500/20',
-    category: 'security',
-    tags: ['password', 'generate', 'secure', 'strength', 'random', 'security']
   },
   {
     name: 'REST API Client',
@@ -308,6 +161,8 @@ export default function ToolsPage() {
     setSelectedCategory('all');
   };
 
+  const aiToolsCount = tools.filter(tool => tool.aiPowered).length;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-muted/30 pt-24">
       <div className="container mx-auto px-4 py-16">
@@ -316,17 +171,28 @@ export default function ToolsPage() {
           <div className="text-center mb-12">
             <div className="flex items-center justify-center mb-6">
               <div className="relative">
-                <Grid3X3 className="h-12 w-12 text-primary mr-4 animate-pulse" />
-                <div className="absolute inset-0 h-12 w-12 text-primary/20 animate-ping" />
+                <Brain className="h-12 w-12 text-purple-500 mr-4 animate-pulse" />
+                <div className="absolute inset-0 h-12 w-12 text-purple-500/20 animate-ping" />
               </div>
-              <h1 className="text-5xl font-bold bg-gradient-to-r from-primary via-blue-600 to-purple-600 bg-clip-text text-transparent">
-                Developer Tools
+              <h1 className="text-5xl font-bold bg-gradient-to-r from-purple-600 via-blue-600 to-emerald-600 bg-clip-text text-transparent">
+                AI-Enhanced DevToolkit
               </h1>
             </div>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              Comprehensive suite of utilities designed to streamline your development workflow.
-              Choose from our collection of powerful, fast, and reliable tools.
+              Next-generation developer tools powered by <span className="text-purple-600 font-semibold">Gemini AI</span>.
+              Streamlined, intelligent, and designed for modern development workflows.
             </p>
+            
+            <div className="flex items-center justify-center gap-4 mt-6">
+              <Badge variant="secondary" className="px-4 py-2">
+                <Sparkles className="h-4 w-4 mr-2 text-purple-500" />
+                {aiToolsCount} AI-Powered Tools
+              </Badge>
+              <Badge variant="outline" className="px-4 py-2">
+                <Grid3X3 className="h-4 w-4 mr-2" />
+                {tools.length} Total Tools
+              </Badge>
+            </div>
           </div>
 
           {/* Search and Filters */}
@@ -334,7 +200,7 @@ export default function ToolsPage() {
             <div className="relative max-w-md mx-auto">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <Input
-                placeholder="Search tools..."
+                placeholder="Search AI-powered tools..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10 pr-10"
@@ -374,7 +240,7 @@ export default function ToolsPage() {
                 <span className="text-sm text-muted-foreground">Active filters:</span>
                 {searchQuery && (
                   <Badge variant="secondary" className="gap-1">
-                    Search: &quot;{searchQuery}&quot;
+                    Search: "{searchQuery}"
                     <X 
                       className="h-3 w-3 cursor-pointer hover:text-destructive" 
                       onClick={() => setSearchQuery('')}
@@ -402,10 +268,15 @@ export default function ToolsPage() {
           <div className="text-center mb-8">
             <p className="text-muted-foreground">
               Showing {filteredTools.length} of {tools.length} tools
+              {selectedCategory === 'ai-powered' && (
+                <span className="ml-2 text-purple-600 font-medium">
+                  ✨ AI-Enhanced Experience
+                </span>
+              )}
             </p>
           </div>
 
-          {/* Tools Grid - 3 columns for desktop */}
+          {/* Tools Grid */}
           {filteredTools.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredTools.map((tool, index) => {
@@ -416,11 +287,25 @@ export default function ToolsPage() {
                     className={`transition-all duration-700 delay-${index * 100} opacity-100 translate-y-0`}
                   >
                     <Link href={tool.href}>
-                      <Card className={`group hover:shadow-xl transition-all duration-300 hover:-translate-y-2 cursor-pointer border-2 hover:${tool.borderColor} h-full ${tool.bgColor} backdrop-blur-sm`}>
+                      <Card className={`group hover:shadow-xl transition-all duration-300 hover:-translate-y-2 cursor-pointer border-2 hover:${tool.borderColor} h-full ${tool.bgColor} backdrop-blur-sm relative overflow-hidden`}>
+                        {tool.aiPowered && (
+                          <div className="absolute top-2 right-2">
+                            <Badge variant="secondary" className="bg-purple-500/10 text-purple-600 border-purple-500/20">
+                              <Sparkles className="h-3 w-3 mr-1" />
+                              AI
+                            </Badge>
+                          </div>
+                        )}
+                        
                         <CardHeader className="text-center p-6">
                           <div className="flex justify-center mb-4">
-                            <div className={`p-4 rounded-full ${tool.bgColor} group-hover:scale-110 transition-all duration-300 shadow-lg`}>
+                            <div className={`p-4 rounded-full ${tool.bgColor} group-hover:scale-110 transition-all duration-300 shadow-lg relative`}>
                               <IconComponent className={`h-8 w-8 ${tool.color} group-hover:animate-pulse`} />
+                              {tool.aiPowered && (
+                                <div className="absolute -top-1 -right-1">
+                                  <Sparkles className="h-4 w-4 text-purple-500 animate-pulse" />
+                                </div>
+                              )}
                             </div>
                           </div>
                           <CardTitle className="text-lg mb-2 group-hover:text-primary transition-colors line-clamp-1">
@@ -460,6 +345,39 @@ export default function ToolsPage() {
               </Button>
             </div>
           )}
+
+          {/* AI Features Highlight */}
+          <div className="mt-16 text-center">
+            <Card className="bg-gradient-to-r from-purple-500/10 via-blue-500/10 to-emerald-500/10 border-purple-500/20">
+              <CardHeader className="p-8">
+                <div className="flex items-center justify-center mb-4">
+                  <Brain className="h-8 w-8 text-purple-500 mr-3" />
+                  <h3 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+                    Powered by Gemini AI
+                  </h3>
+                </div>
+                <p className="text-muted-foreground max-w-2xl mx-auto">
+                  Experience the next generation of developer tools with intelligent automation, 
+                  natural language processing, and AI-powered code optimization. 
+                  Each AI tool learns and adapts to provide better results.
+                </p>
+                <div className="flex items-center justify-center gap-6 mt-6">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-purple-600">{aiToolsCount}</div>
+                    <div className="text-sm text-muted-foreground">AI Tools</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-blue-600">∞</div>
+                    <div className="text-sm text-muted-foreground">Possibilities</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-emerald-600">10x</div>
+                    <div className="text-sm text-muted-foreground">Productivity</div>
+                  </div>
+                </div>
+              </CardHeader>
+            </Card>
+          </div>
         </div>
       </div>
     </div>

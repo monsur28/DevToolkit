@@ -6,11 +6,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { Database, Copy, Trash2, Play, Lightbulb } from 'lucide-react';
+import { Database, Copy, Trash2, Play, Lightbulb, Sparkles, Zap } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import { GeminiAPI } from '@/lib/gemini';
 
 interface QueryTemplate {
   name: string;
@@ -25,6 +26,8 @@ export default function SqlQueryGeneratorPage() {
   const [selectedDatabase, setSelectedDatabase] = useState('mysql');
   const [tableName, setTableName] = useState('users');
   const [columns, setColumns] = useState('id, name, email, created_at');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [useAI, setUseAI] = useState(true);
   const { toast } = useToast();
 
   const queryTemplates: QueryTemplate[] = [
@@ -86,7 +89,7 @@ export default function SqlQueryGeneratorPage() {
     { id: 'oracle', name: 'Oracle', syntax: 'oracle' }
   ];
 
-  const generateQuery = () => {
+  const generateQuery = async () => {
     if (!naturalLanguage.trim()) {
       toast({
         title: "Error",
@@ -96,13 +99,43 @@ export default function SqlQueryGeneratorPage() {
       return;
     }
 
-    const query = parseNaturalLanguage(naturalLanguage.toLowerCase());
-    setGeneratedQuery(query);
-    
-    toast({
-      title: "Query Generated",
-      description: "SQL query has been generated from your description",
-    });
+    setIsGenerating(true);
+
+    try {
+      if (useAI) {
+        // Use Gemini AI for advanced query generation
+        const gemini = new GeminiAPI();
+        const tableContext = `Table: ${tableName}, Columns: ${columns}, Database: ${selectedDatabase}`;
+        const aiQuery = await gemini.generateSQL(naturalLanguage, tableContext);
+        setGeneratedQuery(aiQuery);
+        
+        toast({
+          title: "AI Query Generated",
+          description: "Advanced SQL query generated using Gemini AI",
+        });
+      } else {
+        // Fallback to basic parsing
+        const query = parseNaturalLanguage(naturalLanguage.toLowerCase());
+        setGeneratedQuery(query);
+        
+        toast({
+          title: "Query Generated",
+          description: "SQL query has been generated from your description",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Generation Failed",
+        description: "Failed to generate query. Using fallback method.",
+        variant: "destructive"
+      });
+      
+      // Fallback to basic parsing
+      const query = parseNaturalLanguage(naturalLanguage.toLowerCase());
+      setGeneratedQuery(query);
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   const parseNaturalLanguage = (input: string): string => {
@@ -321,10 +354,44 @@ export default function SqlQueryGeneratorPage() {
                     className="min-h-[200px]"
                   />
                   
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id="useAI"
+                        checked={useAI}
+                        onChange={(e) => setUseAI(e.target.checked)}
+                        className="rounded"
+                      />
+                      <label htmlFor="useAI" className="text-sm font-medium flex items-center">
+                        <Sparkles className="h-4 w-4 mr-1 text-purple-500" />
+                        Use Gemini AI (Advanced)
+                      </label>
+                    </div>
+                  </div>
+                  
                   <div className="flex gap-2">
-                    <Button onClick={generateQuery} className="flex items-center space-x-2">
-                      <Lightbulb className="h-4 w-4" />
-                      <span>Generate SQL</span>
+                    <Button 
+                      onClick={generateQuery} 
+                      disabled={isGenerating}
+                      className="flex items-center space-x-2"
+                    >
+                      {isGenerating ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                          <span>Generating...</span>
+                        </>
+                      ) : useAI ? (
+                        <>
+                          <Sparkles className="h-4 w-4" />
+                          <span>Generate with AI</span>
+                        </>
+                      ) : (
+                        <>
+                          <Lightbulb className="h-4 w-4" />
+                          <span>Generate SQL</span>
+                        </>
+                      )}
                     </Button>
                     <Button onClick={clear} variant="outline" className="flex items-center space-x-2">
                       <Trash2 className="h-4 w-4" />

@@ -1,13 +1,15 @@
-"use client"
+'use client'
 
 import { useState, useEffect } from "react"
 import { ToolLayout } from "@/components/tool-layout"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { useToast } from "@/hooks/use-toast"
-import { Calendar, Copy, RefreshCw } from "lucide-react"
+import { Calendar, Copy, RefreshCw, Sparkles } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
+import { GeminiAPI } from '@/lib/gemini'
 
 interface CronParts {
   minute: string
@@ -29,11 +31,9 @@ export default function CronGeneratorPage() {
   const [description, setDescription] = useState("")
   const [selectedDays, setSelectedDays] = useState<string[]>([])
   const [isMounted, setIsMounted] = useState(false)
+  const [aiDescription, setAiDescription] = useState("")
+  const [isGenerating, setIsGenerating] = useState(false)
   const { toast } = useToast()
-
-  useEffect(() => {
-    setIsMounted(true)
-  }, [])
 
   const daysOfWeek = [
     { value: "0", label: "Sunday" },
@@ -55,6 +55,10 @@ export default function CronGeneratorPage() {
     { name: "Every month on the 1st at midnight", cron: "0 0 1 * *" },
     { name: "Every Sunday at 2 AM", cron: "0 2 * * 0" },
   ]
+
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
 
   useEffect(() => {
     if (isMounted) {
@@ -169,6 +173,53 @@ export default function CronGeneratorPage() {
     }
   }
 
+  const generateCronFromAI = async () => {
+    if (!aiDescription.trim()) {
+      toast({
+        title: "Error",
+        description: "Please describe when you want the task to run",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsGenerating(true);
+    try {
+      const gemini = new GeminiAPI();
+      const result = await gemini.generateCronExpression(aiDescription);
+      
+      if (result.expression) {
+        setCronExpression(result.expression);
+        setDescription(result.explanation);
+        
+        // Parse the generated expression back to parts
+        const parts = result.expression.split(" ");
+        if (parts.length === 5) {
+          setCronParts({
+            minute: parts[0],
+            hour: parts[1],
+            dayOfMonth: parts[2],
+            month: parts[3],
+            dayOfWeek: parts[4],
+          });
+        }
+        
+        toast({
+          title: "Cron Generated",
+          description: "AI-powered cron expression created successfully",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Generation Failed",
+        description: "Failed to generate cron expression",
+        variant: "destructive"
+      });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   const copyToClipboard = async () => {
     if (!isMounted || typeof window === "undefined") return
 
@@ -196,9 +247,10 @@ export default function CronGeneratorPage() {
       dayOfWeek: "*",
     })
     setSelectedDays([])
+    setAiDescription("")
   }
 
-  // Show loading state until mounted
+  // Show loading state until mounted to prevent hydration issues
   if (!isMounted) {
     return (
       <ToolLayout
@@ -223,6 +275,41 @@ export default function CronGeneratorPage() {
       icon={<Calendar className="h-8 w-8 text-amber-500" />}
     >
       <div className="space-y-6">
+        {/* AI Cron Generator */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center space-x-2">
+              <Sparkles className="h-5 w-5 text-purple-500" />
+              <span>AI Cron Generator</span>
+            </CardTitle>
+            <CardDescription>Describe when you want your task to run and let AI create the cron expression</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Input
+              placeholder="e.g., 'every Monday at 9 AM', 'daily at midnight', 'every 15 minutes'"
+              value={aiDescription}
+              onChange={(e) => setAiDescription(e.target.value)}
+            />
+            <Button 
+              onClick={generateCronFromAI}
+              disabled={isGenerating}
+              className="flex items-center space-x-2"
+            >
+              {isGenerating ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                  <span>Generating...</span>
+                </>
+              ) : (
+                <>
+                  <Sparkles className="h-4 w-4" />
+                  <span>Generate with AI</span>
+                </>
+              )}
+            </Button>
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">Generated Cron Expression</CardTitle>

@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { 
-  Wrench, 
   Home, 
   Moon, 
   Sun, 
@@ -14,20 +13,17 @@ import {
   ChevronDown, 
   Sparkles, 
   Zap, 
-  Code2, 
-  Palette, 
-  Shield,
+  Palette,
   X,
   ArrowRight,
   Star,
-  Code,
-  Calculator,
-  Monitor,
-  Shuffle,
   Database,
-  Hash,
-  Key,
-  Send
+  Search,
+  Calendar,
+  Shuffle,
+  Monitor,
+  Send,
+  Brain
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTheme } from 'next-themes';
@@ -42,36 +38,19 @@ import {
 import Image from 'next/image';
 
 const tools = [
-  { name: 'JSON Formatter', href: '/tools/json-formatter', category: 'Data', icon: '📄' },
-  { name: 'Base64 Encoder/Decoder', href: '/tools/base64', category: 'Conversion', icon: '🔐' },
-  { name: 'JWT Decoder & Creator', href: '/tools/jwt-decoder', category: 'Security', icon: '🛡️' },
-  { name: 'UUID Generator', href: '/tools/uuid-generator', category: 'Generators', icon: '🆔' },
-  { name: 'Regex Tester', href: '/tools/regex-tester', category: 'Development', icon: '🔍' },
-  { name: 'cURL Converter', href: '/tools/curl-converter', category: 'Development', icon: '💻' },
-  { name: 'Code Diff Viewer', href: '/tools/diff-viewer', category: 'Development', icon: '📊' },
-  { name: 'Timestamp Converter', href: '/tools/timestamp-converter', category: 'Conversion', icon: '⏰' },
-  { name: 'YAML ⇄ JSON', href: '/tools/yaml-json-converter', category: 'Conversion', icon: '🔄' },
-  { name: 'Markdown Previewer', href: '/tools/markdown-previewer', category: 'Development', icon: '👁️' },
-  { name: 'Cron Generator', href: '/tools/cron-generator', category: 'Generators', icon: '📅' },
-  { name: 'Code Formatter', href: '/tools/code-formatter', category: 'Development', icon: '⚡' },
+  { name: 'AI SQL Query Generator', href: '/tools/sql-query-generator', category: 'AI-Powered', icon: '🤖', aiPowered: true },
+  { name: 'AI Regex Generator', href: '/tools/regex-tester', category: 'AI-Powered', icon: '🔍', aiPowered: true },
+  { name: 'AI Cron Generator', href: '/tools/cron-generator', category: 'AI-Powered', icon: '📅', aiPowered: true },
+  { name: 'AI Code Optimizer', href: '/tools/code-formatter', category: 'AI-Powered', icon: '⚡', aiPowered: true },
+  { name: 'AI Data Generator', href: '/tools/faker-data-generator', category: 'AI-Powered', icon: '🎲', aiPowered: true },
   { name: 'CSS Gradient Generator', href: '/tools/css-gradient-generator', category: 'Design', icon: '🎨' },
-  { name: 'PX to REM Converter', href: '/tools/px-to-rem-converter', category: 'Design', icon: '📐' },
   { name: 'Responsive Design Tester', href: '/tools/responsive-design-tester', category: 'Design', icon: '📱' },
   { name: 'Color Palette Extractor', href: '/tools/color-palette', category: 'Design', icon: '🎨' },
-  { name: 'HTML Email Tester', href: '/tools/html-email-tester', category: 'Development', icon: '📧' },
-  { name: 'Faker Data Generator', href: '/tools/faker-data-generator', category: 'Generators', icon: '🎲' },
-  { name: 'SQL Query Generator', href: '/tools/sql-query-generator', category: 'Development', icon: '🗄️' },
-  { name: 'Hash Generator', href: '/tools/hash-generator', category: 'Security', icon: '🔐' },
-  { name: 'Password Generator', href: '/tools/password-generator', category: 'Security', icon: '🔑' },
   { name: 'REST API Client', href: '/tools/rest-client', category: 'API Tools', icon: '🌐' }
 ];
 
 const toolCategories = {
-  'Data': { tools: tools.filter(t => t.category === 'Data'), icon: Code2, color: 'text-blue-500', bgColor: 'bg-blue-500/10' },
-  'Security': { tools: tools.filter(t => t.category === 'Security'), icon: Shield, color: 'text-purple-500', bgColor: 'bg-purple-500/10' },
-  'Development': { tools: tools.filter(t => t.category === 'Development'), icon: Zap, color: 'text-green-500', bgColor: 'bg-green-500/10' },
-  'Conversion': { tools: tools.filter(t => t.category === 'Conversion'), icon: Grid3X3, color: 'text-orange-500', bgColor: 'bg-orange-500/10' },
-  'Generators': { tools: tools.filter(t => t.category === 'Generators'), icon: Shuffle, color: 'text-pink-500', bgColor: 'bg-pink-500/10' },
+  'AI-Powered': { tools: tools.filter(t => t.category === 'AI-Powered'), icon: Brain, color: 'text-purple-500', bgColor: 'bg-purple-500/10' },
   'Design': { tools: tools.filter(t => t.category === 'Design'), icon: Palette, color: 'text-cyan-500', bgColor: 'bg-cyan-500/10' },
   'API Tools': { tools: tools.filter(t => t.category === 'API Tools'), icon: Send, color: 'text-indigo-500', bgColor: 'bg-indigo-500/10' }
 };
@@ -103,13 +82,11 @@ export function Navigation() {
     };
     
     window.addEventListener('scroll', handleScroll);
-    // Call it once to set the initial state
     handleScroll();
     
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // The ThemeToggle can only be rendered on the client
   const ThemeToggle = () => (
     <>
       {/* Desktop Theme Toggle */}
@@ -197,19 +174,19 @@ export function Navigation() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent 
                         align="center" 
-                        className="w-[600px] max-h-[80vh] overflow-y-auto mt-2 border-0 shadow-2xl bg-background/95 backdrop-blur-xl"
+                        className="w-[500px] max-h-[80vh] overflow-y-auto mt-2 border-0 shadow-2xl bg-background/95 backdrop-blur-xl"
                         sideOffset={8}
                       >
-                        <div className="p-4 border-b bg-gradient-to-r from-primary/5 to-blue-500/5">
+                        <div className="p-4 border-b bg-gradient-to-r from-purple-500/5 to-blue-500/5">
                           <DropdownMenuItem asChild>
                             <Link href="/tools" className="flex items-center justify-between p-3 rounded-lg hover:bg-primary/10 transition-colors">
                               <div className="flex items-center">
-                                <div className="p-2 bg-primary/10 rounded-lg mr-3">
-                                  <Grid3X3 className="h-5 w-5 text-primary" />
+                                <div className="p-2 bg-purple-500/10 rounded-lg mr-3">
+                                  <Brain className="h-5 w-5 text-purple-500" />
                                 </div>
                                 <div>
-                                  <div className="font-semibold text-lg">All Developer Tools</div>
-                                  <div className="text-sm text-muted-foreground">Browse our complete collection of {tools.length} tools</div>
+                                  <div className="font-semibold text-lg">AI-Enhanced Tools</div>
+                                  <div className="text-sm text-muted-foreground">Browse our {tools.length} intelligent developer tools</div>
                                 </div>
                               </div>
                               <ArrowRight className="h-4 w-4 text-muted-foreground" />
@@ -218,7 +195,7 @@ export function Navigation() {
                         </div>
                         
                         <div className="p-4">
-                          <div className="grid grid-cols-2 gap-4">
+                          <div className="grid grid-cols-1 gap-4">
                             {Object.entries(toolCategories).map(([category, { tools: categoryTools, icon: CategoryIcon, color, bgColor }]) => (
                               <div key={category} className={`p-4 rounded-xl border ${bgColor} hover:shadow-md transition-all duration-300 hover:scale-105`}>
                                 <div className="flex items-center mb-3">
@@ -226,13 +203,18 @@ export function Navigation() {
                                     <CategoryIcon className={`h-4 w-4 ${color}`} />
                                   </div>
                                   <div>
-                                    <h3 className="font-semibold text-sm">{category}</h3>
+                                    <h3 className="font-semibold text-sm flex items-center">
+                                      {category}
+                                      {category === 'AI-Powered' && (
+                                        <Sparkles className="h-3 w-3 ml-1 text-purple-500" />
+                                      )}
+                                    </h3>
                                     <p className="text-xs text-muted-foreground">{categoryTools.length} tools</p>
                                   </div>
                                 </div>
                                 
                                 <div className="space-y-1">
-                                  {categoryTools.slice(0, 3).map((tool) => (
+                                  {categoryTools.map((tool) => (
                                     <DropdownMenuItem key={tool.href} asChild>
                                       <Link 
                                         href={tool.href} 
@@ -240,34 +222,26 @@ export function Navigation() {
                                       >
                                         <span className="mr-2 text-sm">{tool.icon}</span>
                                         <span className="truncate">{tool.name}</span>
+                                        {tool.aiPowered && (
+                                          <Sparkles className="h-3 w-3 ml-auto text-purple-500" />
+                                        )}
                                       </Link>
                                     </DropdownMenuItem>
                                   ))}
-                                  
-                                  {categoryTools.length > 3 && (
-                                    <DropdownMenuItem asChild>
-                                      <Link 
-                                        href="/tools" 
-                                        className="text-xs text-muted-foreground py-1 px-2 hover:text-foreground transition-colors"
-                                      >
-                                        +{categoryTools.length - 3} more...
-                                      </Link>
-                                    </DropdownMenuItem>
-                                  )}
                                 </div>
                               </div>
                             ))}
                           </div>
                         </div>
                         
-                        <div className="p-4 border-t bg-gradient-to-r from-primary/5 to-blue-500/5">
+                        <div className="p-4 border-t bg-gradient-to-r from-purple-500/5 to-blue-500/5">
                           <DropdownMenuItem asChild>
                             <Link 
                               href="/tools" 
-                              className="flex items-center justify-center p-3 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors font-medium"
+                              className="flex items-center justify-center p-3 rounded-lg bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-blue-600 hover:to-purple-600 transition-colors font-medium"
                             >
-                              <Star className="h-4 w-4 mr-2" />
-                              Explore All {tools.length} Tools
+                              <Brain className="h-4 w-4 mr-2" />
+                              Explore All AI Tools
                               <ArrowRight className="h-4 w-4 ml-2" />
                             </Link>
                           </DropdownMenuItem>
@@ -324,7 +298,6 @@ export function Navigation() {
               );
             })}
             
-            {/* Render ThemeToggle only when mounted on client */}
             {mounted && <ThemeToggle />}
           </div>
 
@@ -342,12 +315,12 @@ export function Navigation() {
               <SheetContent side="right" className="w-80 bg-background/95 backdrop-blur-xl">
                 <SheetHeader className="border-b pb-4">
                   <SheetTitle className="flex items-center space-x-3">
-                    <div className="p-2 bg-primary/10 rounded-lg">
-                      <Wrench className="h-5 w-5 text-primary" />
+                    <div className="p-2 bg-purple-500/10 rounded-lg">
+                      <Brain className="h-5 w-5 text-purple-500" />
                     </div>
                     <div>
                       <div className="font-bold text-lg">DevToolkit</div>
-                      <div className="text-xs text-muted-foreground">Complete Developer Toolkit</div>
+                      <div className="text-xs text-muted-foreground">AI-Enhanced Developer Tools</div>
                     </div>
                   </SheetTitle>
                 </SheetHeader>
@@ -373,14 +346,17 @@ export function Navigation() {
                   
                   <div className="border-t pt-6">
                     <div className="flex items-center justify-between mb-4">
-                      <h3 className="font-semibold text-lg">Popular Tools</h3>
-                      <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-full">
-                        {tools.length} total
+                      <h3 className="font-semibold text-lg flex items-center">
+                        <Sparkles className="h-4 w-4 mr-2 text-purple-500" />
+                        AI Tools
+                      </h3>
+                      <span className="text-xs text-muted-foreground bg-purple-500/10 px-2 py-1 rounded-full">
+                        {tools.filter(t => t.aiPowered).length} AI-powered
                       </span>
                     </div>
                     
                     <div className="space-y-1 max-h-64 overflow-y-auto">
-                      {tools.slice(0, 12).map((tool) => (
+                      {tools.map((tool) => (
                         <Link key={tool.href} href={tool.href} onClick={() => setIsOpen(false)}>
                           <Button 
                             variant="ghost" 
@@ -388,6 +364,9 @@ export function Navigation() {
                           >
                             <span className="mr-3 text-base">{tool.icon}</span>
                             <span className="truncate">{tool.name}</span>
+                            {tool.aiPowered && (
+                              <Sparkles className="h-3 w-3 ml-auto text-purple-500" />
+                            )}
                           </Button>
                         </Link>
                       ))}
@@ -395,9 +374,9 @@ export function Navigation() {
                     
                     <Link href="/tools" onClick={() => setIsOpen(false)}>
                       <Button 
-                        className="w-full mt-4 bg-gradient-to-r from-primary to-blue-600 hover:from-blue-600 hover:to-purple-600 text-white rounded-xl py-3"
+                        className="w-full mt-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-blue-600 hover:to-purple-600 text-white rounded-xl py-3"
                       >
-                        <Grid3X3 className="h-4 w-4 mr-2" />
+                        <Brain className="h-4 w-4 mr-2" />
                         View All {tools.length} Tools
                         <ArrowRight className="h-4 w-4 ml-2" />
                       </Button>

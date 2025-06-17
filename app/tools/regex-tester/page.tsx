@@ -6,11 +6,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { Search, Copy, Trash2, AlertCircle, Check } from 'lucide-react';
+import { Search, Copy, Trash2, AlertCircle, Check, Sparkles, Lightbulb } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
+import { GeminiAPI } from '@/lib/gemini';
 
 interface Match {
   match: string;
@@ -30,6 +31,9 @@ export default function RegexTesterPage() {
   const [matches, setMatches] = useState<Match[]>([]);
   const [error, setError] = useState('');
   const [isValid, setIsValid] = useState<boolean | null>(null);
+  const [aiDescription, setAiDescription] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [regexExplanation, setRegexExplanation] = useState('');
   const { toast } = useToast();
 
   const testRegex = () => {
@@ -108,12 +112,49 @@ export default function RegexTesterPage() {
     });
   };
 
+  const generateRegexFromAI = async () => {
+    if (!aiDescription.trim()) {
+      toast({
+        title: "Error",
+        description: "Please describe what you want to match",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsGenerating(true);
+    try {
+      const gemini = new GeminiAPI();
+      const result = await gemini.generateRegex(aiDescription);
+      
+      if (result.pattern) {
+        setPattern(result.pattern);
+        setRegexExplanation(result.explanation);
+        
+        toast({
+          title: "Regex Generated",
+          description: "AI-powered regex pattern created successfully",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Generation Failed",
+        description: "Failed to generate regex pattern",
+        variant: "destructive"
+      });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   const clear = () => {
     setPattern('');
     setTestString('');
     setMatches([]);
     setError('');
     setIsValid(null);
+    setAiDescription('');
+    setRegexExplanation('');
   };
 
   const highlightMatches = (text: string) => {
@@ -145,6 +186,48 @@ export default function RegexTesterPage() {
       icon={<Search className="h-8 w-8 text-red-500" />}
     >
       <div className="space-y-6">
+        {/* AI Regex Generator */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center space-x-2">
+              <Sparkles className="h-5 w-5 text-purple-500" />
+              <span>AI Regex Generator</span>
+            </CardTitle>
+            <CardDescription>Describe what you want to match and let AI create the regex for you</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Textarea
+              placeholder="Describe what you want to match (e.g., 'email addresses', 'phone numbers', 'URLs starting with https')"
+              value={aiDescription}
+              onChange={(e) => setAiDescription(e.target.value)}
+              className="min-h-[80px]"
+            />
+            <Button 
+              onClick={generateRegexFromAI}
+              disabled={isGenerating}
+              className="flex items-center space-x-2"
+            >
+              {isGenerating ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                  <span>Generating...</span>
+                </>
+              ) : (
+                <>
+                  <Sparkles className="h-4 w-4" />
+                  <span>Generate Regex with AI</span>
+                </>
+              )}
+            </Button>
+            
+            {regexExplanation && (
+              <div className="p-3 bg-muted rounded-md">
+                <p className="text-sm"><strong>AI Explanation:</strong> {regexExplanation}</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card>
             <CardHeader>
@@ -153,7 +236,7 @@ export default function RegexTesterPage() {
                 {isValid === true && <Check className="h-4 w-4 text-green-500" />}
                 {isValid === false && <AlertCircle className="h-4 w-4 text-red-500" />}
               </CardTitle>
-              <CardDescription>Enter your regular expression pattern</CardDescription>
+              <CardDescription>Enter your regular expression pattern or use AI generator above</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center space-x-2">

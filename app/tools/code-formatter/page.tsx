@@ -5,14 +5,20 @@ import { ToolLayout } from '@/components/tool-layout';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { Zap, Copy, Trash2, Minimize2, Maximize2 } from 'lucide-react';
+import { Zap, Copy, Trash2, Minimize2, Maximize2, Sparkles, Lightbulb, Check } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { GeminiAPI } from '@/lib/gemini';
 
 export default function CodeFormatterPage() {
   const [input, setInput] = useState('');
   const [output, setOutput] = useState('');
   const [codeType, setCodeType] = useState('javascript');
+  const [optimizedCode, setOptimizedCode] = useState('');
+  const [improvements, setImprovements] = useState<string[]>([]);
+  const [codeExplanation, setCodeExplanation] = useState('');
+  const [isOptimizing, setIsOptimizing] = useState(false);
+  const [isExplaining, setIsExplaining] = useState(false);
   const { toast } = useToast();
 
   const minifyJavaScript = (code: string): string => {
@@ -195,6 +201,71 @@ export default function CodeFormatterPage() {
     }
   };
 
+  const optimizeWithAI = async () => {
+    if (!input.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter some code to optimize",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsOptimizing(true);
+    try {
+      const gemini = new GeminiAPI();
+      const result = await gemini.optimizeCode(input, codeType);
+      
+      setOptimizedCode(result.optimized);
+      setImprovements(result.improvements);
+      
+      toast({
+        title: "Code Optimized",
+        description: "AI has analyzed and optimized your code",
+      });
+    } catch (error) {
+      toast({
+        title: "Optimization Failed",
+        description: "Failed to optimize code with AI",
+        variant: "destructive"
+      });
+    } finally {
+      setIsOptimizing(false);
+    }
+  };
+
+  const explainCode = async () => {
+    if (!input.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter some code to explain",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsExplaining(true);
+    try {
+      const gemini = new GeminiAPI();
+      const explanation = await gemini.explainCode(input, codeType);
+      
+      setCodeExplanation(explanation);
+      
+      toast({
+        title: "Code Explained",
+        description: "AI has provided a detailed explanation",
+      });
+    } catch (error) {
+      toast({
+        title: "Explanation Failed",
+        description: "Failed to explain code with AI",
+        variant: "destructive"
+      });
+    } finally {
+      setIsExplaining(false);
+    }
+  };
+
   const copyToClipboard = async () => {
     if (output) {
       await navigator.clipboard.writeText(output);
@@ -208,6 +279,9 @@ export default function CodeFormatterPage() {
   const clear = () => {
     setInput('');
     setOutput('');
+    setOptimizedCode('');
+    setImprovements([]);
+    setCodeExplanation('');
   };
 
   const loadExample = () => {
@@ -314,6 +388,32 @@ console.log("Total:", calculateTotal(cart));`,
                 <Button onClick={loadExample} variant="outline" size="sm">
                   Load Example
                 </Button>
+                <Button 
+                  onClick={optimizeWithAI}
+                  disabled={isOptimizing}
+                  variant="outline"
+                  className="flex items-center space-x-2"
+                >
+                  {isOptimizing ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current" />
+                  ) : (
+                    <Sparkles className="h-4 w-4" />
+                  )}
+                  <span>{isOptimizing ? 'Optimizing...' : 'AI Optimize'}</span>
+                </Button>
+                <Button 
+                  onClick={explainCode}
+                  disabled={isExplaining}
+                  variant="outline"
+                  className="flex items-center space-x-2"
+                >
+                  {isExplaining ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current" />
+                  ) : (
+                    <Lightbulb className="h-4 w-4" />
+                  )}
+                  <span>{isExplaining ? 'Explaining...' : 'AI Explain'}</span>
+                </Button>
               </div>
             </div>
           </CardContent>
@@ -361,6 +461,65 @@ console.log("Total:", calculateTotal(cart));`,
           </Card>
         </div>
 
+        {/* AI Results */}
+        {optimizedCode && (
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-lg flex items-center">
+                    <Sparkles className="h-5 w-5 mr-2 text-purple-500" />
+                    AI Optimized Code
+                  </CardTitle>
+                  <CardDescription>Improved version with performance enhancements</CardDescription>
+                </div>
+                <Button onClick={() => navigator.clipboard.writeText(optimizedCode)} size="sm" variant="outline">
+                  <Copy className="h-4 w-4 mr-2" />
+                  Copy
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <Textarea
+                value={optimizedCode}
+                readOnly
+                className="min-h-[200px] font-mono text-sm bg-muted"
+              />
+              
+              {improvements.length > 0 && (
+                <div className="mt-4 p-4 bg-muted/50 rounded-lg">
+                  <h4 className="font-medium mb-2">AI Improvements:</h4>
+                  <ul className="space-y-1 text-sm">
+                    {improvements.map((improvement, index) => (
+                      <li key={index} className="flex items-start">
+                        <Check className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                        {improvement}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {codeExplanation && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center">
+                <Lightbulb className="h-5 w-5 mr-2 text-amber-500" />
+                AI Code Explanation
+              </CardTitle>
+              <CardDescription>Detailed breakdown of how your code works</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="prose prose-sm max-w-none">
+                <p className="text-sm leading-relaxed whitespace-pre-wrap">{codeExplanation}</p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">About Code Formatting</CardTitle>
@@ -368,7 +527,7 @@ console.log("Total:", calculateTotal(cart));`,
           <CardContent className="space-y-3 text-sm text-muted-foreground">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <h4 className="font-medium text-foreground mb-2">Minification Benefits:</h4>
+                <h4 className="font-medium text-foreground mb-2">Performance Tips:</h4>
                 <ul className="space-y-1">
                   <li>• Reduces file size for faster loading</li>
                   <li>• Removes unnecessary whitespace and comments</li>
