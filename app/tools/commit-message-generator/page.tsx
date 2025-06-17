@@ -279,7 +279,7 @@ index 1234567..abcdefg 100644
           </CardHeader>
           <CardContent className="space-y-4 text-sm">
             <div className="bg-muted p-4 rounded-lg font-mono">
-              <type>[optional scope]: <description><br/>
+              type[optional scope]: description<br/>
               <br/>
               [optional body]<br/>
               <br/>
