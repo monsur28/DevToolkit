@@ -23,7 +23,10 @@ import {
   Shuffle,
   Monitor,
   Send,
-  Brain
+  Brain,
+  FileText,
+  GitCommit,
+  Bug
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTheme } from 'next-themes';
@@ -43,6 +46,11 @@ const tools = [
   { name: 'AI Cron Generator', href: '/tools/cron-generator', category: 'AI-Powered', icon: '📅', aiPowered: true },
   { name: 'AI Code Optimizer', href: '/tools/code-formatter', category: 'AI-Powered', icon: '⚡', aiPowered: true },
   { name: 'AI Data Generator', href: '/tools/faker-data-generator', category: 'AI-Powered', icon: '🎲', aiPowered: true },
+  { name: 'AI Bug Finder', href: '/tools/ai-bug-finder', category: 'AI-Powered', icon: '🐛', aiPowered: true },
+  { name: 'Commit Message Generator', href: '/tools/commit-message-generator', category: 'AI-Powered', icon: '📝', aiPowered: true },
+  { name: 'README Generator', href: '/tools/readme-generator', category: 'AI-Powered', icon: '📚', aiPowered: true },
+  { name: 'API Response Analyzer', href: '/tools/api-response-analyzer', category: 'AI-Powered', icon: '🔍', aiPowered: true },
+  { name: 'Learning Assistant', href: '/tools/learning-assistant', category: 'AI-Powered', icon: '🧠', aiPowered: true },
   { name: 'CSS Gradient Generator', href: '/tools/css-gradient-generator', category: 'Design', icon: '🎨' },
   { name: 'Responsive Design Tester', href: '/tools/responsive-design-tester', category: 'Design', icon: '📱' },
   { name: 'Color Palette Extractor', href: '/tools/color-palette', category: 'Design', icon: '🎨' },
