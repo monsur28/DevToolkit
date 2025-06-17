@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { Send, Copy, Trash2, Plus, Minus, Clock, CheckCircle, AlertCircle, BarChart3, Eye, Code, FileText, Zap, Search, Filter } from 'lucide-react';
+import { Send, Copy, Trash2, Plus, Minus, Clock, CheckCircle, AlertCircle, BarChart3, Eye, Download, FileText, Zap, Brain, Search } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -43,24 +43,16 @@ interface ResponseAnalysis {
     type: string;
     keys?: string[];
     arrayLength?: number;
-    depth: number;
+    depth?: number;
   };
   insights: {
-    hasErrors: boolean;
-    errorFields: string[];
-    dataTypes: Record<string, string>;
-    nullFields: string[];
+    dataTypes: Record<string, number>;
+    nullValues: number;
+    emptyValues: number;
     patterns: string[];
   };
-  performance: {
-    responseTime: number;
-    sizeCategory: string;
-    recommendations: string[];
-  };
-  security: {
-    sensitiveFields: string[];
-    warnings: string[];
-  };
+  summary: string;
+  recommendations: string[];
 }
 
 export default function RestClientPage() {
@@ -75,8 +67,7 @@ export default function RestClientPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [history, setHistory] = useState<RequestHistory[]>([]);
   const [activeTab, setActiveTab] = useState('response');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filterType, setFilterType] = useState('all');
+  const [showAnalysis, setShowAnalysis] = useState(false);
   const { toast } = useToast();
 
   const httpMethods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'];
@@ -101,101 +92,90 @@ export default function RestClientPage() {
     ));
   };
 
-  const analyzeResponse = (responseData: any, duration: number, size: number): ResponseAnalysis => {
+  const analyzeResponse = (data: any): ResponseAnalysis => {
     const analysis: ResponseAnalysis = {
       structure: {
-        type: Array.isArray(responseData) ? 'array' : typeof responseData,
-        depth: getObjectDepth(responseData),
-        ...(Array.isArray(responseData) && { arrayLength: responseData.length }),
-        ...(typeof responseData === 'object' && responseData !== null && { keys: Object.keys(responseData) })
+        type: Array.isArray(data) ? 'array' : typeof data,
+        depth: 0
       },
       insights: {
-        hasErrors: false,
-        errorFields: [],
         dataTypes: {},
-        nullFields: [],
+        nullValues: 0,
+        emptyValues: 0,
         patterns: []
       },
-      performance: {
-        responseTime: duration,
-        sizeCategory: size < 1024 ? 'small' : size < 10240 ? 'medium' : 'large',
-        recommendations: []
-      },
-      security: {
-        sensitiveFields: [],
-        warnings: []
+      summary: '',
+      recommendations: []
+    };
+
+    // Analyze structure
+    if (Array.isArray(data)) {
+      analysis.structure.arrayLength = data.length;
+      analysis.structure.type = 'array';
+      if (data.length > 0) {
+        analysis.structure.keys = Object.keys(data[0]);
+      }
+    } else if (typeof data === 'object' && data !== null) {
+      analysis.structure.keys = Object.keys(data);
+      analysis.structure.type = 'object';
+    }
+
+    // Deep analysis function
+    const analyzeValue = (value: any, depth: number = 0) => {
+      analysis.structure.depth = Math.max(analysis.structure.depth, depth);
+      
+      const type = Array.isArray(value) ? 'array' : typeof value;
+      analysis.insights.dataTypes[type] = (analysis.insights.dataTypes[type] || 0) + 1;
+
+      if (value === null) {
+        analysis.insights.nullValues++;
+      } else if (value === '' || (Array.isArray(value) && value.length === 0)) {
+        analysis.insights.emptyValues++;
+      }
+
+      if (typeof value === 'object' && value !== null) {
+        Object.values(value).forEach(v => analyzeValue(v, depth + 1));
       }
     };
 
-    // Analyze data structure and types
-    if (typeof responseData === 'object' && responseData !== null) {
-      analyzeObject(responseData, analysis, '');
+    analyzeValue(data);
+
+    // Generate patterns
+    if (analysis.structure.keys) {
+      const commonPatterns = analysis.structure.keys.filter(key => 
+        key.includes('id') || key.includes('name') || key.includes('email') || 
+        key.includes('date') || key.includes('time') || key.includes('url')
+      );
+      analysis.insights.patterns = commonPatterns;
     }
 
-    // Performance recommendations
-    if (duration > 2000) {
-      analysis.performance.recommendations.push('Response time is slow (>2s). Consider optimizing the API.');
-    }
-    if (size > 50000) {
-      analysis.performance.recommendations.push('Large response size. Consider pagination or data filtering.');
+    // Generate summary
+    if (Array.isArray(data)) {
+      analysis.summary = `Array containing ${data.length} items`;
+      if (data.length > 0 && typeof data[0] === 'object') {
+        analysis.summary += ` with ${Object.keys(data[0]).length} properties each`;
+      }
+    } else if (typeof data === 'object' && data !== null) {
+      analysis.summary = `Object with ${Object.keys(data).length} properties`;
+    } else {
+      analysis.summary = `${typeof data} value`;
     }
 
-    // Detect common patterns
-    if (analysis.structure.keys?.includes('data') && analysis.structure.keys?.includes('meta')) {
-      analysis.insights.patterns.push('Standard API wrapper pattern detected');
+    // Generate recommendations
+    if (analysis.insights.nullValues > 0) {
+      analysis.recommendations.push(`Consider handling ${analysis.insights.nullValues} null values`);
     }
-    if (analysis.structure.keys?.includes('error') || analysis.structure.keys?.includes('errors')) {
-      analysis.insights.hasErrors = true;
-      analysis.insights.patterns.push('Error response pattern detected');
+    if (analysis.insights.emptyValues > 0) {
+      analysis.recommendations.push(`Found ${analysis.insights.emptyValues} empty values that might need validation`);
+    }
+    if (analysis.structure.depth > 3) {
+      analysis.recommendations.push('Deep nesting detected - consider flattening the structure');
+    }
+    if (Array.isArray(data) && data.length > 100) {
+      analysis.recommendations.push('Large array detected - consider implementing pagination');
     }
 
     return analysis;
-  };
-
-  const analyzeObject = (obj: any, analysis: ResponseAnalysis, path: string) => {
-    Object.entries(obj).forEach(([key, value]) => {
-      const fullPath = path ? `${path}.${key}` : key;
-      
-      // Track data types
-      analysis.insights.dataTypes[fullPath] = Array.isArray(value) ? 'array' : typeof value;
-      
-      // Check for null values
-      if (value === null) {
-        analysis.insights.nullFields.push(fullPath);
-      }
-      
-      // Check for error fields
-      if (key.toLowerCase().includes('error') || key.toLowerCase().includes('message')) {
-        analysis.insights.errorFields.push(fullPath);
-      }
-      
-      // Check for sensitive fields
-      const sensitiveKeywords = ['password', 'token', 'key', 'secret', 'auth', 'credential'];
-      if (sensitiveKeywords.some(keyword => key.toLowerCase().includes(keyword))) {
-        analysis.security.sensitiveFields.push(fullPath);
-        analysis.security.warnings.push(`Potentially sensitive field detected: ${fullPath}`);
-      }
-      
-      // Recursively analyze nested objects
-      if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
-        analyzeObject(value, analysis, fullPath);
-      } else if (Array.isArray(value) && value.length > 0 && typeof value[0] === 'object') {
-        analyzeObject(value[0], analysis, `${fullPath}[0]`);
-      }
-    });
-  };
-
-  const getObjectDepth = (obj: any): number => {
-    if (typeof obj !== 'object' || obj === null) return 0;
-    
-    let maxDepth = 0;
-    Object.values(obj).forEach(value => {
-      if (typeof value === 'object' && value !== null) {
-        maxDepth = Math.max(maxDepth, 1 + getObjectDepth(value));
-      }
-    });
-    
-    return maxDepth;
   };
 
   const sendRequest = async () => {
@@ -265,9 +245,15 @@ export default function RestClientPage() {
 
       setResponse(responseData);
       
-      // Analyze response
-      const analysis = analyzeResponse(data, duration, size);
-      setResponseAnalysis(analysis);
+      // Analyze response if it's JSON
+      if (typeof data === 'object') {
+        const analysis = analyzeResponse(data);
+        setResponseAnalysis(analysis);
+        setShowAnalysis(true);
+      } else {
+        setResponseAnalysis(null);
+        setShowAnalysis(false);
+      }
       
       setActiveTab('response');
 
@@ -323,6 +309,27 @@ export default function RestClientPage() {
     }
   };
 
+  const downloadResponse = () => {
+    if (!response) return;
+    
+    const content = typeof response.data === 'string' 
+      ? response.data 
+      : JSON.stringify(response.data, null, 2);
+    
+    const blob = new Blob([content], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `api-response-${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    
+    toast({
+      title: "Downloaded!",
+      description: "Response downloaded successfully",
+    });
+  };
+
   const loadFromHistory = (item: RequestHistory) => {
     setMethod(item.method);
     setUrl(item.url);
@@ -363,46 +370,10 @@ export default function RestClientPage() {
     return 'text-muted-foreground';
   };
 
-  const filteredResponseData = () => {
-    if (!response?.data || typeof response.data !== 'object') return response?.data;
-    
-    if (!searchQuery) return response.data;
-    
-    // Simple search implementation
-    const searchInObject = (obj: any): any => {
-      if (typeof obj === 'string') {
-        return obj.toLowerCase().includes(searchQuery.toLowerCase()) ? obj : null;
-      }
-      
-      if (Array.isArray(obj)) {
-        return obj.map(searchInObject).filter(item => item !== null);
-      }
-      
-      if (typeof obj === 'object' && obj !== null) {
-        const filtered: any = {};
-        Object.entries(obj).forEach(([key, value]) => {
-          if (key.toLowerCase().includes(searchQuery.toLowerCase())) {
-            filtered[key] = value;
-          } else {
-            const searchResult = searchInObject(value);
-            if (searchResult !== null) {
-              filtered[key] = searchResult;
-            }
-          }
-        });
-        return Object.keys(filtered).length > 0 ? filtered : null;
-      }
-      
-      return null;
-    };
-    
-    return searchInObject(response.data) || response.data;
-  };
-
   return (
     <ToolLayout
       title="REST API Client & Response Analyzer"
-      description="Test REST APIs with intelligent response analysis, performance insights, and security scanning"
+      description="Test REST APIs with full HTTP method support, headers, and intelligent response analysis"
       icon={<Send className="h-8 w-8 text-blue-500" />}
     >
       <div className="space-y-6">
@@ -411,8 +382,11 @@ export default function RestClientPage() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-lg">HTTP Request</CardTitle>
-                <CardDescription>Configure your API request with intelligent analysis</CardDescription>
+                <CardTitle className="text-lg flex items-center">
+                  <Send className="h-5 w-5 mr-2" />
+                  HTTP Request
+                </CardTitle>
+                <CardDescription>Configure your API request with intelligent response analysis</CardDescription>
               </div>
               <div className="flex gap-2">
                 <Button onClick={loadExample} variant="outline" size="sm">
@@ -427,7 +401,7 @@ export default function RestClientPage() {
                   ) : (
                     <>
                       <Send className="h-4 w-4" />
-                      <span>Send & Analyze</span>
+                      <span>Send Request</span>
                     </>
                   )}
                 </Button>
@@ -601,319 +575,254 @@ Example JSON:
           </CardContent>
         </Card>
 
-        {/* Response with Analysis */}
+        {/* Response */}
         {response && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Response Data */}
-            <div className="lg:col-span-2">
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className="text-lg flex items-center space-x-2">
-                        <span>Response</span>
-                        <Badge variant="outline" className={getStatusColor(response.status)}>
-                          {response.status} {response.statusText}
-                        </Badge>
-                      </CardTitle>
-                      <CardDescription>
-                        {response.duration}ms • {formatBytes(response.size)}
-                      </CardDescription>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button onClick={copyResponse} size="sm" variant="outline">
-                        <Copy className="h-4 w-4 mr-2" />
-                        Copy
-                      </Button>
-                    </div>
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-lg flex items-center space-x-2">
+                    <span>Response</span>
+                    <Badge variant="outline" className={getStatusColor(response.status)}>
+                      {response.status} {response.statusText}
+                    </Badge>
+                    {showAnalysis && (
+                      <Badge variant="secondary" className="bg-blue-500/10 text-blue-600">
+                        <Brain className="h-3 w-3 mr-1" />
+                        AI Analyzed
+                      </Badge>
+                    )}
+                  </CardTitle>
+                  <CardDescription>
+                    {response.duration}ms • {formatBytes(response.size)}
+                  </CardDescription>
+                </div>
+                <div className="flex gap-2">
+                  <Button onClick={copyResponse} size="sm" variant="outline">
+                    <Copy className="h-4 w-4 mr-2" />
+                    Copy
+                  </Button>
+                  <Button onClick={downloadResponse} size="sm" variant="outline">
+                    <Download className="h-4 w-4 mr-2" />
+                    Download
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <Tabs value={activeTab} onValueChange={setActiveTab}>
+                <TabsList className={`grid w-full ${showAnalysis ? 'grid-cols-3' : 'grid-cols-2'}`}>
+                  <TabsTrigger value="response">Response Body</TabsTrigger>
+                  <TabsTrigger value="response-headers">Headers</TabsTrigger>
+                  {showAnalysis && (
+                    <TabsTrigger value="analysis" className="flex items-center space-x-1">
+                      <BarChart3 className="h-4 w-4" />
+                      <span>Analysis</span>
+                    </TabsTrigger>
+                  )}
+                </TabsList>
+
+                <TabsContent value="response" className="space-y-4">
+                  <Textarea
+                    value={typeof response.data === 'string' 
+                      ? response.data 
+                      : JSON.stringify(response.data, null, 2)
+                    }
+                    readOnly
+                    className="min-h-[300px] font-mono text-sm bg-muted"
+                  />
+                </TabsContent>
+
+                <TabsContent value="response-headers" className="space-y-4">
+                  <div className="space-y-2">
+                    {Object.entries(response.headers).map(([key, value]) => (
+                      <div key={key} className="flex items-center justify-between p-2 bg-muted rounded">
+                        <span className="font-medium text-sm">{key}:</span>
+                        <span className="text-sm font-mono">{value}</span>
+                      </div>
+                    ))}
                   </div>
-                </CardHeader>
-                <CardContent>
-                  <Tabs value={activeTab} onValueChange={setActiveTab}>
-                    <TabsList className="grid w-full grid-cols-2">
-                      <TabsTrigger value="response">Response Body</TabsTrigger>
-                      <TabsTrigger value="response-headers">Headers</TabsTrigger>
-                    </TabsList>
+                </TabsContent>
 
-                    <TabsContent value="response" className="space-y-4">
-                      {/* Search and Filter */}
-                      <div className="flex gap-2">
-                        <div className="relative flex-1">
-                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                          <Input
-                            placeholder="Search in response..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="pl-10"
-                          />
-                        </div>
-                        <Select value={filterType} onValueChange={setFilterType}>
-                          <SelectTrigger className="w-32">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="all">All</SelectItem>
-                            <SelectItem value="strings">Strings</SelectItem>
-                            <SelectItem value="numbers">Numbers</SelectItem>
-                            <SelectItem value="objects">Objects</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <Textarea
-                        value={typeof filteredResponseData() === 'string' 
-                          ? filteredResponseData() 
-                          : JSON.stringify(filteredResponseData(), null, 2)
-                        }
-                        readOnly
-                        className="min-h-[400px] font-mono text-sm bg-muted"
-                      />
-                    </TabsContent>
-
-                    <TabsContent value="response-headers" className="space-y-4">
-                      <div className="space-y-2">
-                        {Object.entries(response.headers).map(([key, value]) => (
-                          <div key={key} className="flex items-center justify-between p-2 bg-muted rounded">
-                            <span className="font-medium text-sm">{key}:</span>
-                            <span className="text-sm font-mono">{value}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </TabsContent>
-                  </Tabs>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Analysis Panel */}
-            <div className="space-y-4">
-              {responseAnalysis && (
-                <>
-                  {/* Quick Insights */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-base flex items-center">
-                        <BarChart3 className="h-4 w-4 mr-2" />
-                        Quick Insights
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm">Response Type</span>
-                        <Badge variant="outline">{responseAnalysis.structure.type}</Badge>
-                      </div>
-                      
-                      {responseAnalysis.structure.arrayLength && (
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm">Array Length</span>
-                          <Badge variant="outline">{responseAnalysis.structure.arrayLength}</Badge>
-                        </div>
-                      )}
-                      
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm">Object Depth</span>
-                        <Badge variant="outline">{responseAnalysis.structure.depth}</Badge>
-                      </div>
-                      
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm">Performance</span>
-                        <Badge variant={responseAnalysis.performance.responseTime < 1000 ? "default" : "destructive"}>
-                          {responseAnalysis.performance.sizeCategory}
-                        </Badge>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  {/* Data Structure */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-base flex items-center">
-                        <Code className="h-4 w-4 mr-2" />
-                        Data Structure
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-2">
-                      {responseAnalysis.structure.keys && (
-                        <div>
-                          <p className="text-sm font-medium mb-2">Top-level Keys:</p>
-                          <div className="flex flex-wrap gap-1">
-                            {responseAnalysis.structure.keys.slice(0, 8).map(key => (
-                              <Badge key={key} variant="outline" className="text-xs">
-                                {key}
-                              </Badge>
-                            ))}
-                            {responseAnalysis.structure.keys.length > 8 && (
-                              <Badge variant="outline" className="text-xs">
-                                +{responseAnalysis.structure.keys.length - 8} more
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                      
-                      {responseAnalysis.insights.patterns.length > 0 && (
-                        <div>
-                          <p className="text-sm font-medium mb-2">Patterns:</p>
-                          {responseAnalysis.insights.patterns.map((pattern, index) => (
-                            <p key={index} className="text-xs text-muted-foreground">
-                              • {pattern}
-                            </p>
-                          ))}
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-
-                  {/* Performance Analysis */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-base flex items-center">
-                        <Zap className="h-4 w-4 mr-2" />
-                        Performance
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm">Response Time</span>
-                        <span className={`text-sm font-medium ${
-                          responseAnalysis.performance.responseTime < 1000 ? 'text-green-600' : 'text-red-600'
-                        }`}>
-                          {responseAnalysis.performance.responseTime}ms
-                        </span>
-                      </div>
-                      
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm">Size Category</span>
-                        <Badge variant={
-                          responseAnalysis.performance.sizeCategory === 'small' ? 'default' :
-                          responseAnalysis.performance.sizeCategory === 'medium' ? 'secondary' : 'destructive'
-                        }>
-                          {responseAnalysis.performance.sizeCategory}
-                        </Badge>
-                      </div>
-                      
-                      {responseAnalysis.performance.recommendations.length > 0 && (
-                        <div>
-                          <p className="text-sm font-medium mb-2">Recommendations:</p>
-                          {responseAnalysis.performance.recommendations.map((rec, index) => (
-                            <p key={index} className="text-xs text-muted-foreground">
-                              • {rec}
-                            </p>
-                          ))}
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-
-                  {/* Security Analysis */}
-                  {(responseAnalysis.security.sensitiveFields.length > 0 || responseAnalysis.security.warnings.length > 0) && (
-                    <Card>
+                {showAnalysis && responseAnalysis && (
+                  <TabsContent value="analysis" className="space-y-6">
+                    {/* Response Summary */}
+                    <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 border-blue-200 dark:border-blue-800">
                       <CardHeader>
-                        <CardTitle className="text-base flex items-center">
-                          <AlertCircle className="h-4 w-4 mr-2 text-orange-500" />
-                          Security
+                        <CardTitle className="text-lg flex items-center">
+                          <Eye className="h-5 w-5 mr-2 text-blue-600" />
+                          Response Summary
                         </CardTitle>
                       </CardHeader>
-                      <CardContent className="space-y-2">
-                        {responseAnalysis.security.sensitiveFields.length > 0 && (
-                          <div>
-                            <p className="text-sm font-medium mb-2">Sensitive Fields:</p>
-                            {responseAnalysis.security.sensitiveFields.map(field => (
-                              <Badge key={field} variant="destructive" className="text-xs mr-1 mb-1">
-                                {field}
-                              </Badge>
-                            ))}
-                          </div>
-                        )}
-                        
-                        {responseAnalysis.security.warnings.length > 0 && (
-                          <div>
-                            <p className="text-sm font-medium mb-2">Warnings:</p>
-                            {responseAnalysis.security.warnings.map((warning, index) => (
-                              <p key={index} className="text-xs text-orange-600">
-                                ⚠️ {warning}
-                              </p>
-                            ))}
-                          </div>
-                        )}
+                      <CardContent>
+                        <p className="text-lg font-medium text-blue-800 dark:text-blue-200">
+                          {responseAnalysis.summary}
+                        </p>
                       </CardContent>
                     </Card>
-                  )}
 
-                  {/* Data Quality */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-base flex items-center">
-                        <CheckCircle className="h-4 w-4 mr-2" />
-                        Data Quality
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm">Null Fields</span>
-                        <Badge variant={responseAnalysis.insights.nullFields.length === 0 ? "default" : "secondary"}>
-                          {responseAnalysis.insights.nullFields.length}
-                        </Badge>
-                      </div>
-                      
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm">Error Fields</span>
-                        <Badge variant={responseAnalysis.insights.errorFields.length === 0 ? "default" : "destructive"}>
-                          {responseAnalysis.insights.errorFields.length}
-                        </Badge>
-                      </div>
-                      
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm">Data Types</span>
-                        <Badge variant="outline">
-                          {Object.keys(responseAnalysis.insights.dataTypes).length}
-                        </Badge>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </>
-              )}
-            </div>
-          </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {/* Structure Analysis */}
+                      <Card>
+                        <CardHeader>
+                          <CardTitle className="text-base flex items-center">
+                            <FileText className="h-4 w-4 mr-2" />
+                            Structure Analysis
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                          <div className="flex justify-between">
+                            <span className="text-sm font-medium">Type:</span>
+                            <Badge variant="outline">{responseAnalysis.structure.type}</Badge>
+                          </div>
+                          {responseAnalysis.structure.arrayLength && (
+                            <div className="flex justify-between">
+                              <span className="text-sm font-medium">Array Length:</span>
+                              <Badge variant="secondary">{responseAnalysis.structure.arrayLength}</Badge>
+                            </div>
+                          )}
+                          <div className="flex justify-between">
+                            <span className="text-sm font-medium">Nesting Depth:</span>
+                            <Badge variant="outline">{responseAnalysis.structure.depth}</Badge>
+                          </div>
+                          {responseAnalysis.structure.keys && (
+                            <div>
+                              <span className="text-sm font-medium">Properties:</span>
+                              <div className="flex flex-wrap gap-1 mt-2">
+                                {responseAnalysis.structure.keys.slice(0, 6).map((key) => (
+                                  <Badge key={key} variant="secondary" className="text-xs">
+                                    {key}
+                                  </Badge>
+                                ))}
+                                {responseAnalysis.structure.keys.length > 6 && (
+                                  <Badge variant="outline" className="text-xs">
+                                    +{responseAnalysis.structure.keys.length - 6} more
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+
+                      {/* Data Insights */}
+                      <Card>
+                        <CardHeader>
+                          <CardTitle className="text-base flex items-center">
+                            <BarChart3 className="h-4 w-4 mr-2" />
+                            Data Insights
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                          <div>
+                            <span className="text-sm font-medium">Data Types:</span>
+                            <div className="flex flex-wrap gap-1 mt-2">
+                              {Object.entries(responseAnalysis.insights.dataTypes).map(([type, count]) => (
+                                <Badge key={type} variant="outline" className="text-xs">
+                                  {type}: {count}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                          {responseAnalysis.insights.nullValues > 0 && (
+                            <div className="flex justify-between">
+                              <span className="text-sm font-medium">Null Values:</span>
+                              <Badge variant="destructive" className="text-xs">
+                                {responseAnalysis.insights.nullValues}
+                              </Badge>
+                            </div>
+                          )}
+                          {responseAnalysis.insights.emptyValues > 0 && (
+                            <div className="flex justify-between">
+                              <span className="text-sm font-medium">Empty Values:</span>
+                              <Badge variant="secondary" className="text-xs">
+                                {responseAnalysis.insights.emptyValues}
+                              </Badge>
+                            </div>
+                          )}
+                          {responseAnalysis.insights.patterns.length > 0 && (
+                            <div>
+                              <span className="text-sm font-medium">Common Patterns:</span>
+                              <div className="flex flex-wrap gap-1 mt-2">
+                                {responseAnalysis.insights.patterns.map((pattern) => (
+                                  <Badge key={pattern} variant="secondary" className="text-xs">
+                                    {pattern}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    </div>
+
+                    {/* Recommendations */}
+                    {responseAnalysis.recommendations.length > 0 && (
+                      <Card className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 border-amber-200 dark:border-amber-800">
+                        <CardHeader>
+                          <CardTitle className="text-base flex items-center">
+                            <Zap className="h-4 w-4 mr-2 text-amber-600" />
+                            Recommendations
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <ul className="space-y-2">
+                            {responseAnalysis.recommendations.map((rec, index) => (
+                              <li key={index} className="flex items-start space-x-2">
+                                <div className="w-2 h-2 bg-amber-500 rounded-full mt-2 flex-shrink-0" />
+                                <span className="text-sm text-amber-800 dark:text-amber-200">{rec}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </CardContent>
+                      </Card>
+                    )}
+                  </TabsContent>
+                )}
+              </Tabs>
+            </CardContent>
+          </Card>
         )}
 
         {/* Tips */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Enhanced REST Client Features</CardTitle>
+            <CardTitle className="text-lg flex items-center">
+              <Search className="h-5 w-5 mr-2" />
+              REST Client & Response Analysis Tips
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 text-sm">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <h4 className="font-medium mb-2">🔍 Response Analysis:</h4>
+                <h4 className="font-medium mb-2">API Testing Best Practices:</h4>
                 <ul className="space-y-1 text-muted-foreground">
-                  <li>• Automatic data structure detection</li>
-                  <li>• Performance metrics and recommendations</li>
-                  <li>• Security vulnerability scanning</li>
-                  <li>• Data quality assessment</li>
-                  <li>• Pattern recognition in API responses</li>
+                  <li>• Test different HTTP methods (GET, POST, PUT, DELETE)</li>
+                  <li>• Validate response status codes and headers</li>
+                  <li>• Test with various content types (JSON, XML, form data)</li>
+                  <li>• Include authentication headers when required</li>
+                  <li>• Test error scenarios and edge cases</li>
                 </ul>
               </div>
               <div>
-                <h4 className="font-medium mb-2">⚡ Smart Features:</h4>
+                <h4 className="font-medium mb-2">Response Analysis Features:</h4>
                 <ul className="space-y-1 text-muted-foreground">
-                  <li>• Real-time response search and filtering</li>
-                  <li>• Intelligent error detection</li>
-                  <li>• Response time optimization tips</li>
-                  <li>• Sensitive data identification</li>
-                  <li>• API pattern analysis</li>
+                  <li>• Automatic structure detection and validation</li>
+                  <li>• Data type analysis and null value detection</li>
+                  <li>• Performance recommendations for large datasets</li>
+                  <li>• Common API pattern recognition</li>
+                  <li>• Security and optimization suggestions</li>
                 </ul>
               </div>
             </div>
             
             <div className="p-4 bg-muted/50 rounded-lg">
-              <h4 className="font-medium mb-2">💡 Pro Tips:</h4>
-              <ul className="text-muted-foreground space-y-1">
-                <li>• Use the search feature to quickly find specific data in large responses</li>
-                <li>• Check the security analysis for potential data exposure issues</li>
-                <li>• Monitor performance metrics to optimize your API calls</li>
-                <li>• Review data quality insights to improve API design</li>
-              </ul>
+              <h4 className="font-medium mb-2">🧠 AI-Powered Analysis:</h4>
+              <p className="text-muted-foreground">
+                The response analyzer automatically examines JSON responses to provide insights about data structure, 
+                identify potential issues, and suggest improvements. This helps you understand API responses better 
+                and optimize your applications accordingly.
+              </p>
             </div>
           </CardContent>
         </Card>
