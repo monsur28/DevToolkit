@@ -72,6 +72,13 @@ _Optional:_ The **SQL Query Generator** tool can use AI for natural-language inp
 - **TypeScript** – Typed superset of JavaScript for safer code.
 - **React** – JavaScript library for building user interfaces.
 - **Node.js** – JavaScript runtime (used by Next.js on the server side).
+## Screenshot
+
+<p align="center">
+  <img src="[https://your-screenshot-url-here.png](https://res.cloudinary.com/dg8w1kluo/image/upload/v1764696550/screencapture-dev-toolkit-beta-vercel-app-2025-12-02-23_24_35_pgy3ef.png)" alt="DevToolkit Build Screenshot" width="800" />
+</p>
+
+_Figure: Screenshot of the production build of DevToolkit running on Vercel._
 
 ## Author
 
