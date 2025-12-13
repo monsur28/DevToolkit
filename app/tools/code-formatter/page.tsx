@@ -34,25 +34,25 @@ export default function CodeFormatterPage() {
     let indentLevel = 0;
     const indentSize = 2;
     const lines = formatted.split(/[;{}]/).filter(line => line.trim());
-    
+
     const result: string[] = [];
-    
+
     for (let line of lines) {
       line = line.trim();
       if (!line) continue;
-      
+
       if (line.includes('}')) {
         indentLevel = Math.max(0, indentLevel - 1);
       }
-      
+
       const indent = ' '.repeat(indentLevel * indentSize);
       result.push(indent + line + (line.includes('{') ? '' : ';'));
-      
+
       if (line.includes('{')) {
         indentLevel++;
       }
     }
-    
+
     return result.join('\n');
   };
 
@@ -72,30 +72,30 @@ export default function CodeFormatterPage() {
     let formatted = code;
     let indentLevel = 0;
     const indentSize = 2;
-    
+
     formatted = formatted.replace(/{\s*/g, ' {\n');
     formatted = formatted.replace(/}\s*/g, '\n}\n');
     formatted = formatted.replace(/;\s*/g, ';\n');
-    
+
     const lines = formatted.split('\n');
     const result: string[] = [];
-    
+
     for (let line of lines) {
       line = line.trim();
       if (!line) continue;
-      
+
       if (line === '}') {
         indentLevel = Math.max(0, indentLevel - 1);
       }
-      
+
       const indent = ' '.repeat(indentLevel * indentSize);
       result.push(indent + line);
-      
+
       if (line.includes('{')) {
         indentLevel++;
       }
     }
-    
+
     return result.join('\n');
   };
 
@@ -120,7 +120,7 @@ export default function CodeFormatterPage() {
   const minifyCode = () => {
     try {
       let result = '';
-      
+
       switch (codeType) {
         case 'javascript':
           result = minifyJavaScript(input);
@@ -134,7 +134,7 @@ export default function CodeFormatterPage() {
         default:
           result = input.replace(/\s+/g, ' ').trim();
       }
-      
+
       setOutput(result);
       toast({
         title: "Success",
@@ -152,7 +152,7 @@ export default function CodeFormatterPage() {
   const prettifyCode = () => {
     try {
       let result = '';
-      
+
       switch (codeType) {
         case 'javascript':
           result = prettifyJSON(input); // Try JSON first for JS objects
@@ -166,7 +166,7 @@ export default function CodeFormatterPage() {
         default:
           result = input;
       }
-      
+
       setOutput(result);
       toast({
         title: "Success",
@@ -187,7 +187,7 @@ export default function CodeFormatterPage() {
           // Fall through to error handling
         }
       }
-      
+
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to format code",
@@ -267,7 +267,7 @@ console.log("Total:", calculateTotal(cart));`,
   }
 }`
     };
-    
+
     setInput(examples[codeType as keyof typeof examples] || '');
   };
 
@@ -284,11 +284,11 @@ console.log("Total:", calculateTotal(cart));`,
             <CardDescription>Select the type of code you want to format</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex flex-wrap gap-4 items-center">
-              <div className="space-y-2">
+            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+              <div className="space-y-2 w-full sm:w-auto">
                 <label className="text-sm font-medium">Code Type</label>
                 <Select value={codeType} onValueChange={setCodeType}>
-                  <SelectTrigger className="w-40">
+                  <SelectTrigger className="w-full sm:w-40">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -298,21 +298,24 @@ console.log("Total:", calculateTotal(cart));`,
                   </SelectContent>
                 </Select>
               </div>
-              
-              <div className="flex gap-2">
-                <Button onClick={minifyCode} variant="outline" className="flex items-center space-x-2">
+
+              <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+                <Button onClick={minifyCode} variant="outline" className="flex-1 sm:flex-none items-center space-x-2">
                   <Minimize2 className="h-4 w-4" />
                   <span>Minify</span>
                 </Button>
-                <Button onClick={prettifyCode} className="flex items-center space-x-2">
+                <Button onClick={prettifyCode} className="flex-1 sm:flex-none items-center space-x-2">
                   <Maximize2 className="h-4 w-4" />
                   <span>Prettify</span>
                 </Button>
-                <Button onClick={clear} variant="outline" className="flex items-center space-x-2">
+                <Button onClick={clear} variant="outline" className="flex-1 sm:flex-none items-center space-x-2">
                   <Trash2 className="h-4 w-4" />
                   <span>Clear</span>
                 </Button>
-                <Button onClick={loadExample} variant="outline" size="sm">
+                <Button onClick={loadExample} variant="outline" size="sm" className="hidden sm:inline-flex">
+                  Load Example
+                </Button>
+                <Button onClick={loadExample} variant="outline" size="sm" className="sm:hidden w-full">
                   Load Example
                 </Button>
               </div>

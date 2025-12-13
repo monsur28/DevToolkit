@@ -6,10 +6,10 @@ import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/ca
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { 
-  FileText, 
-  Key, 
-  Shield, 
+import {
+  FileText,
+  Key,
+  Shield,
   Hash,
   Search,
   Terminal,
@@ -28,7 +28,10 @@ import {
   Mail,
   Shuffle,
   Database,
-  Send
+  Send,
+  QrCode,
+  GitBranch,
+  Layers
 } from 'lucide-react';
 
 const categories = [
@@ -209,6 +212,17 @@ const tools = [
     tags: ['responsive', 'design', 'viewport', 'mobile', 'tablet', 'desktop', 'testing']
   },
   {
+    name: 'Glassmorphism Generator',
+    description: 'Create beautiful, frosted glass effects with real-time preview and instant CSS generation',
+    icon: Palette,
+    href: '/tools/glassmorphism-generator',
+    color: 'text-cyan-500',
+    bgColor: 'bg-cyan-500/10',
+    borderColor: 'border-cyan-500/20',
+    category: 'design',
+    tags: ['glassmorphism', 'css', 'design', 'generator', 'frosted', 'blur']
+  },
+  {
     name: 'Color Palette Extractor',
     description: 'Extract dominant colors from images and generate harmonious color palettes',
     icon: Palette,
@@ -240,6 +254,39 @@ const tools = [
     borderColor: 'border-green-500/20',
     category: 'generators',
     tags: ['fake', 'data', 'generator', 'testing', 'lorem', 'names', 'emails']
+  },
+  {
+    name: 'QR Code Generator',
+    description: 'Generate fully customizable QR codes with colors, logos, and high-resolution download',
+    icon: QrCode,
+    href: '/tools/qr-code-generator',
+    color: 'text-primary',
+    bgColor: 'bg-primary/10',
+    borderColor: 'border-primary/20',
+    category: 'generators',
+    tags: ['qr', 'code', 'generator', 'scan', 'mobile', 'link']
+  },
+  {
+    name: 'Git Command Explorer',
+    description: 'Interactive terminal guide to finding the right Git command for any scenario',
+    icon: GitBranch,
+    href: '/tools/git-explorer',
+    color: 'text-orange-600',
+    bgColor: 'bg-orange-600/10',
+    borderColor: 'border-orange-600/20',
+    category: 'development',
+    tags: ['git', 'command', 'terminal', 'version control', 'guide']
+  },
+  {
+    name: 'SVG Shape Generator',
+    description: 'Generate organic SVG blobs and waves for modern UI backgrounds',
+    icon: Layers,
+    href: '/tools/svg-shape-generator',
+    color: 'text-pink-500',
+    bgColor: 'bg-pink-500/10',
+    borderColor: 'border-pink-500/20',
+    category: 'design',
+    tags: ['svg', 'blob', 'wave', 'shape', 'generator', 'design', 'background']
   },
   {
     name: 'SQL Query Generator',
@@ -294,11 +341,11 @@ export default function ToolsPage() {
   const filteredTools = useMemo(() => {
     return tools.filter(tool => {
       const matchesSearch = tool.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           tool.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           tool.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
-      
+        tool.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        tool.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
+
       const matchesCategory = selectedCategory === 'all' || tool.category === selectedCategory;
-      
+
       return matchesSearch && matchesCategory;
     });
   }, [searchQuery, selectedCategory]);
@@ -359,9 +406,8 @@ export default function ToolsPage() {
                   variant={selectedCategory === category.id ? "default" : "outline"}
                   size="sm"
                   onClick={() => setSelectedCategory(category.id)}
-                  className={`transition-all duration-200 hover:scale-105 ${
-                    selectedCategory === category.id ? category.color : ''
-                  }`}
+                  className={`transition-all duration-200 hover:scale-105 ${selectedCategory === category.id ? category.color : ''
+                    }`}
                 >
                   {category.name}
                 </Button>
@@ -375,8 +421,8 @@ export default function ToolsPage() {
                 {searchQuery && (
                   <Badge variant="secondary" className="gap-1">
                     Search: &quot;{searchQuery}&quot;
-                    <X 
-                      className="h-3 w-3 cursor-pointer hover:text-destructive" 
+                    <X
+                      className="h-3 w-3 cursor-pointer hover:text-destructive"
                       onClick={() => setSearchQuery('')}
                     />
                   </Badge>
@@ -384,8 +430,8 @@ export default function ToolsPage() {
                 {selectedCategory !== 'all' && (
                   <Badge variant="secondary" className="gap-1">
                     Category: {categories.find(c => c.id === selectedCategory)?.name}
-                    <X 
-                      className="h-3 w-3 cursor-pointer hover:text-destructive" 
+                    <X
+                      className="h-3 w-3 cursor-pointer hover:text-destructive"
                       onClick={() => setSelectedCategory('all')}
                     />
                   </Badge>

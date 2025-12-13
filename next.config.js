@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'export',
+  // output: 'export',
   eslint: {
     ignoreDuringBuilds: true,
   },
@@ -18,7 +18,7 @@ const nextConfig = {
         minimize: false,
       };
     }
-    
+
     // Reduce memory usage
     config.resolve.fallback = {
       ...config.resolve.fallback,
@@ -26,7 +26,7 @@ const nextConfig = {
       net: false,
       tls: false,
     };
-    
+
     return config;
   },
 };

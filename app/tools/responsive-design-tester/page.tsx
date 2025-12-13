@@ -34,6 +34,8 @@ export default function ResponsiveDesignTesterPage() {
   const [isPortrait, setIsPortrait] = useState(true);
   const [showFrames, setShowFrames] = useState(true);
   const [syncScroll, setSyncScroll] = useState(true);
+  const [useProxy, setUseProxy] = useState(false);
+  const [proxyContent, setProxyContent] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [loadedUrl, setLoadedUrl] = useState('');
   const [customWidth, setCustomWidth] = useState('');
@@ -49,16 +51,16 @@ export default function ResponsiveDesignTesterPage() {
     { name: 'Mobile 320px', width: 320, height: 568, category: 'mobile', icon: Smartphone },
     { name: 'Mobile 375px', width: 375, height: 667, category: 'mobile', icon: Smartphone },
     { name: 'Mobile 414px', width: 414, height: 896, category: 'mobile', icon: Smartphone },
-    
+
     // Tablet - exact requirements  
     { name: 'Tablet 768px', width: 768, height: 1024, category: 'tablet', icon: Tablet },
     { name: 'Tablet 1024px', width: 1024, height: 1366, category: 'tablet', icon: Tablet },
-    
+
     // Desktop - exact requirements
     { name: 'Desktop 1280px', width: 1280, height: 720, category: 'desktop', icon: Monitor },
     { name: 'Desktop 1440px', width: 1440, height: 900, category: 'desktop', icon: Monitor },
     { name: 'Desktop 1920px', width: 1920, height: 1080, category: 'desktop', icon: Monitor },
-    
+
     // Popular devices for reference
     { name: 'iPhone 12', width: 390, height: 844, category: 'mobile', icon: Smartphone },
     { name: 'iPad', width: 820, height: 1180, category: 'tablet', icon: Tablet },
@@ -82,7 +84,7 @@ export default function ResponsiveDesignTesterPage() {
     localStorage.setItem('responsive-tester-custom-devices', JSON.stringify(devices));
   };
 
-  const loadUrl = () => {
+  const loadUrl = async () => {
     if (!url.trim()) {
       toast({
         title: "Error",
@@ -106,19 +108,55 @@ export default function ResponsiveDesignTesterPage() {
 
     setIsLoading(true);
     setLoadedUrl(url);
-    
-    // Simulate loading time
-    setTimeout(() => {
-      setIsLoading(false);
-      toast({
-        title: "URL Loaded",
-        description: "Website loaded in all viewports",
-      });
-    }, 1000);
+
+    if (useProxy) {
+      try {
+        const response = await fetch('/api/proxy', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url, method: 'GET' })
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) throw new Error(result.error);
+
+        // Inject base tag for relative assets
+        const baseTag = `<base href="${url}" />`;
+        const htmlContent = typeof result.data === 'string'
+          ? result.data.replace('<head>', `<head>${baseTag}`)
+          : result.data;
+
+        setProxyContent(htmlContent);
+
+        toast({
+          title: "Proxy Loaded",
+          description: "Website content loaded via proxy",
+        });
+      } catch (error) {
+        toast({
+          title: "Proxy Failed",
+          description: "Failed to load via proxy. Try disabling proxy mode.",
+          variant: "destructive"
+        });
+        setProxyContent('');
+      }
+    } else {
+      setProxyContent('');
+      // Simulate loading time for direct iframe
+      setTimeout(() => {
+        toast({
+          title: "URL Loaded",
+          description: "Website loaded in all viewports",
+        });
+      }, 1000);
+    }
+
+    setIsLoading(false);
   };
 
   const toggleDevice = (deviceName: string) => {
-    setSelectedDevices(prev => 
+    setSelectedDevices(prev =>
       prev.includes(deviceName)
         ? prev.filter(d => d !== deviceName)
         : [...prev, deviceName]
@@ -134,10 +172,10 @@ export default function ResponsiveDesignTesterPage() {
       });
       return;
     }
-    
+
     const width = parseInt(customWidth);
     const height = parseInt(customHeight);
-    
+
     if (width < 100 || width > 4000 || height < 100 || height > 4000) {
       toast({
         title: "Invalid Dimensions",
@@ -146,21 +184,21 @@ export default function ResponsiveDesignTesterPage() {
       });
       return;
     }
-    
+
     const newDevice: CustomDevice = {
       name: customName.trim(),
       width,
       height
     };
-    
+
     saveCustomDevices([...customDevices, newDevice]);
     setSelectedDevices(prev => [...prev, newDevice.name]);
-    
+
     // Clear form
     setCustomName('');
     setCustomWidth('');
     setCustomHeight('');
-    
+
     toast({
       title: "Custom Device Added",
       description: `${newDevice.name} (${width}x${height}) added successfully`,
@@ -170,7 +208,7 @@ export default function ResponsiveDesignTesterPage() {
   const removeCustomDevice = (name: string) => {
     saveCustomDevices(customDevices.filter(d => d.name !== name));
     setSelectedDevices(prev => prev.filter(d => d !== name));
-    
+
     toast({
       title: "Device Removed",
       description: `${name} removed from custom devices`,
@@ -182,12 +220,12 @@ export default function ResponsiveDesignTesterPage() {
     if (device) {
       return isPortrait ? { width: device.width, height: device.height } : { width: device.height, height: device.width };
     }
-    
+
     const customDevice = customDevices.find(d => d.name === deviceName);
     if (customDevice) {
       return isPortrait ? { width: customDevice.width, height: customDevice.height } : { width: customDevice.height, height: customDevice.width };
     }
-    
+
     return { width: 375, height: 667 };
   };
 
@@ -216,11 +254,11 @@ export default function ResponsiveDesignTesterPage() {
 
   const handleScroll = (deviceName: string, event: any) => {
     if (!syncScroll) return;
-    
+
     try {
       const scrollTop = event.target.contentWindow?.scrollY || 0;
       const scrollLeft = event.target.contentWindow?.scrollX || 0;
-      
+
       // Sync scroll to other iframes
       Object.entries(iframeRefs.current).forEach(([name, iframe]) => {
         if (name !== deviceName && iframe?.contentWindow) {
@@ -239,7 +277,7 @@ export default function ResponsiveDesignTesterPage() {
   const selectedDeviceList = selectedDevices.map(name => {
     const device = devices.find(d => d.name === name);
     if (device) return device;
-    
+
     const customDevice = customDevices.find(d => d.name === name);
     if (customDevice) {
       return {
@@ -267,7 +305,7 @@ export default function ResponsiveDesignTesterPage() {
             <CardDescription>Enter a URL to test across different device viewports</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <Input
                 placeholder="https://example.com"
                 value={url}
@@ -275,7 +313,7 @@ export default function ResponsiveDesignTesterPage() {
                 onKeyDown={(e) => e.key === 'Enter' && loadUrl()}
                 className="flex-1"
               />
-              <Button onClick={loadUrl} disabled={isLoading}>
+              <Button onClick={loadUrl} disabled={isLoading} className="w-full sm:w-auto">
                 {isLoading ? (
                   <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
                 ) : (
@@ -284,8 +322,8 @@ export default function ResponsiveDesignTesterPage() {
                 {isLoading ? 'Loading...' : 'Load URL'}
               </Button>
             </div>
-            
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="flex items-center space-x-2">
                 <Switch
                   checked={isPortrait}
@@ -295,7 +333,7 @@ export default function ResponsiveDesignTesterPage() {
                   {isPortrait ? 'Portrait' : 'Landscape'}
                 </Label>
               </div>
-              
+
               <div className="flex items-center space-x-2">
                 <Switch
                   checked={showFrames}
@@ -303,7 +341,7 @@ export default function ResponsiveDesignTesterPage() {
                 />
                 <Label className="text-sm">Device Frames</Label>
               </div>
-              
+
               <div className="flex items-center space-x-2">
                 <Switch
                   checked={syncScroll}
@@ -311,7 +349,15 @@ export default function ResponsiveDesignTesterPage() {
                 />
                 <Label className="text-sm">Sync Scroll</Label>
               </div>
-              
+
+              <div className="flex items-center space-x-2">
+                <Switch
+                  checked={useProxy}
+                  onCheckedChange={setUseProxy}
+                />
+                <Label className="text-sm">Use Proxy</Label>
+              </div>
+
               <div className="flex items-center space-x-2">
                 <Label className="text-sm">Zoom:</Label>
                 <Select value={zoomLevel} onValueChange={setZoomLevel}>
@@ -477,7 +523,7 @@ export default function ResponsiveDesignTesterPage() {
                       Add Custom Device
                     </Button>
                   </div>
-                  
+
                   {customDevices.length > 0 && (
                     <div className="space-y-2">
                       <h4 className="font-medium text-sm">Your Custom Devices:</h4>
@@ -519,37 +565,37 @@ export default function ResponsiveDesignTesterPage() {
                   <CardDescription>Common device combinations</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                  <Button 
+                  <Button
                     onClick={() => setSelectedDevices(['Mobile 320px', 'Mobile 375px', 'Mobile 414px'])}
-                    variant="outline" 
-                    size="sm" 
+                    variant="outline"
+                    size="sm"
                     className="w-full justify-start"
                   >
                     <Smartphone className="h-4 w-4 mr-2" />
                     All Mobile Sizes
                   </Button>
-                  <Button 
+                  <Button
                     onClick={() => setSelectedDevices(['Tablet 768px', 'Tablet 1024px'])}
-                    variant="outline" 
-                    size="sm" 
+                    variant="outline"
+                    size="sm"
                     className="w-full justify-start"
                   >
                     <Tablet className="h-4 w-4 mr-2" />
                     All Tablet Sizes
                   </Button>
-                  <Button 
+                  <Button
                     onClick={() => setSelectedDevices(['Desktop 1280px', 'Desktop 1440px', 'Desktop 1920px'])}
-                    variant="outline" 
-                    size="sm" 
+                    variant="outline"
+                    size="sm"
                     className="w-full justify-start"
                   >
                     <Monitor className="h-4 w-4 mr-2" />
                     All Desktop Sizes
                   </Button>
-                  <Button 
+                  <Button
                     onClick={() => setSelectedDevices(['Mobile 375px', 'Tablet 768px', 'Desktop 1920px'])}
-                    variant="outline" 
-                    size="sm" 
+                    variant="outline"
+                    size="sm"
                     className="w-full justify-start"
                   >
                     <Settings className="h-4 w-4 mr-2" />
@@ -566,7 +612,7 @@ export default function ResponsiveDesignTesterPage() {
                 {selectedDeviceList.map(device => {
                   const dimensions = getDeviceDimensions(device.name);
                   const IconComponent = device.icon;
-                  
+
                   return (
                     <Card key={device.name} className="overflow-hidden">
                       <CardHeader className="pb-3">
@@ -590,27 +636,28 @@ export default function ResponsiveDesignTesterPage() {
                         </div>
                       </CardHeader>
                       <CardContent className="p-0">
-                        <div 
+                        <div
                           className={`relative mx-auto ${showFrames ? 'p-4 bg-gray-800 rounded-lg' : ''}`}
-                          style={{ 
+                          style={{
                             width: showFrames ? (dimensions.width * zoomScale) + 32 : dimensions.width * zoomScale,
                             height: showFrames ? (dimensions.height * zoomScale) + 32 : dimensions.height * zoomScale
                           }}
                         >
                           <iframe
                             ref={(el) => iframeRefs.current[device.name] = el}
-                            src={loadedUrl}
+                            src={!useProxy ? loadedUrl : undefined}
+                            srcDoc={useProxy ? proxyContent : undefined}
                             width={dimensions.width}
                             height={dimensions.height}
                             className={`border-0 ${showFrames ? 'rounded shadow-lg' : ''}`}
-                            style={{ 
+                            style={{
                               transform: `scale(${zoomScale})`,
                               transformOrigin: 'top left'
                             }}
                             onLoad={(e) => {
                               if (syncScroll) {
                                 try {
-                                  e.currentTarget.contentWindow?.addEventListener('scroll', 
+                                  e.currentTarget.contentWindow?.addEventListener('scroll',
                                     (event) => handleScroll(device.name, event)
                                   );
                                 } catch (error) {
@@ -619,7 +666,7 @@ export default function ResponsiveDesignTesterPage() {
                               }
                             }}
                           />
-                          
+
                           {showFrames && (
                             <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2">
                               <div className="w-12 h-1 bg-gray-600 rounded-full"></div>
@@ -642,6 +689,9 @@ export default function ResponsiveDesignTesterPage() {
                   <Button onClick={() => setUrl('https://example.com')} variant="outline">
                     Load Example Site
                   </Button>
+                  <p className="mt-4 text-xs text-muted-foreground bg-muted p-2 rounded">
+                    <strong>Note:</strong> Many major sites (like Google, Facebook) block being loaded in iframes for security reasons. Try loading your own projects or sites that allow embedding.
+                  </p>
                 </CardContent>
               </Card>
             )}
@@ -683,12 +733,12 @@ export default function ResponsiveDesignTesterPage() {
                 </ul>
               </div>
             </div>
-            
+
             <div className="p-4 bg-muted/50 rounded-lg">
               <h4 className="font-medium mb-2">🔒 CORS & Security Note:</h4>
               <p className="text-muted-foreground">
-                Some websites may not load due to CORS (Cross-Origin Resource Sharing) restrictions or 
-                X-Frame-Options headers that prevent embedding in iframes. This is a security feature 
+                Some websites may not load due to CORS (Cross-Origin Resource Sharing) restrictions or
+                X-Frame-Options headers that prevent embedding in iframes. This is a security feature
                 and not a limitation of this tool. Synchronized scrolling will only work for same-origin content.
                 For best results, test with your own websites or sites that allow iframe embedding.
               </p>
