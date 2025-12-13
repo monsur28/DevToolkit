@@ -68,7 +68,7 @@ export default function RestClientPage() {
   };
 
   const updateHeader = (id: string, field: keyof Header, value: any) => {
-    setHeaders(headers.map(h => 
+    setHeaders(headers.map(h =>
       h.id === id ? { ...h, [field]: value } : h
     ));
   };
@@ -95,50 +95,27 @@ export default function RestClientPage() {
         }
       });
 
-      // Prepare request options
-      const options: RequestInit = {
-        method,
-        headers: requestHeaders,
-      };
-
-      // Add body for methods that support it
-      if (['POST', 'PUT', 'PATCH'].includes(method) && body) {
-        options.body = body;
-      }
-
-      // Make the request
-      const response = await fetch(url, options);
-      const duration = Date.now() - startTime;
-      
-      // Parse response
-      const contentType = response.headers.get('content-type');
-      let data;
-      
-      if (contentType?.includes('application/json')) {
-        data = await response.json();
-      } else {
-        data = await response.text();
-      }
-
-      // Get response headers
-      const responseHeaders: Record<string, string> = {};
-      response.headers.forEach((value, key) => {
-        responseHeaders[key] = value;
+      // Use internal proxy to bypass CORS
+      const proxyResponse = await fetch('/api/proxy', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          url,
+          method,
+          headers: requestHeaders,
+          body: (['POST', 'PUT', 'PATCH'].includes(method) && body) ? body : undefined
+        })
       });
 
-      // Calculate response size (approximate)
-      const size = new Blob([JSON.stringify(data)]).size;
+      const result = await proxyResponse.json();
 
-      const responseData: Response = {
-        status: response.status,
-        statusText: response.statusText,
-        headers: responseHeaders,
-        data,
-        duration,
-        size
-      };
+      if (!proxyResponse.ok) {
+        throw new Error(result.error || 'Proxy request failed');
+      }
 
-      setResponse(responseData);
+      setResponse(result);
       setActiveTab('response');
 
       // Add to history
@@ -147,19 +124,19 @@ export default function RestClientPage() {
         method,
         url,
         timestamp: new Date(),
-        status: response.status,
-        duration
+        status: result.status,
+        duration: result.duration
       };
       setHistory(prev => [historyItem, ...prev.slice(0, 9)]); // Keep last 10 requests
 
       toast({
         title: "Request Sent",
-        description: `${response.status} ${response.statusText} (${duration}ms)`,
+        description: `${result.status} ${result.statusText} (${result.duration}ms)`,
       });
 
     } catch (error) {
       const duration = Date.now() - startTime;
-      
+
       toast({
         title: "Request Failed",
         description: error instanceof Error ? error.message : "Network error occurred",
@@ -182,8 +159,8 @@ export default function RestClientPage() {
 
   const copyResponse = async () => {
     if (response) {
-      const text = typeof response.data === 'string' 
-        ? response.data 
+      const text = typeof response.data === 'string'
+        ? response.data
         : JSON.stringify(response.data, null, 2);
       await navigator.clipboard.writeText(text);
       toast({
@@ -243,16 +220,16 @@ export default function RestClientPage() {
         {/* Request Configuration */}
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
                 <CardTitle className="text-lg">HTTP Request</CardTitle>
                 <CardDescription>Configure your API request</CardDescription>
               </div>
-              <div className="flex gap-2">
-                <Button onClick={loadExample} variant="outline" size="sm">
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Button onClick={loadExample} variant="outline" size="sm" className="w-full sm:w-auto">
                   Load Example
                 </Button>
-                <Button onClick={sendRequest} disabled={isLoading} className="flex items-center space-x-2">
+                <Button onClick={sendRequest} disabled={isLoading} className="flex items-center justify-center space-x-2 w-full sm:w-auto">
                   {isLoading ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
@@ -270,21 +247,21 @@ export default function RestClientPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Method and URL */}
-            <div className="flex gap-2">
+            {/* Method and URL */}
+            <div className="flex flex-col sm:flex-row gap-2">
               <Select value={method} onValueChange={setMethod}>
-                <SelectTrigger className="w-32">
+                <SelectTrigger className="w-full sm:w-32">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   {httpMethods.map(m => (
                     <SelectItem key={m} value={m}>
-                      <span className={`font-medium ${
-                        m === 'GET' ? 'text-blue-600' :
+                      <span className={`font-medium ${m === 'GET' ? 'text-blue-600' :
                         m === 'POST' ? 'text-green-600' :
-                        m === 'PUT' ? 'text-orange-600' :
-                        m === 'DELETE' ? 'text-red-600' :
-                        'text-purple-600'
-                      }`}>
+                          m === 'PUT' ? 'text-orange-600' :
+                            m === 'DELETE' ? 'text-red-600' :
+                              'text-purple-600'
+                        }`}>
                         {m}
                       </span>
                     </SelectItem>
@@ -315,22 +292,28 @@ export default function RestClientPage() {
                     Add Header
                   </Button>
                 </div>
-                
+
                 <div className="space-y-2 max-h-64 overflow-y-auto">
                   {headers.map((header) => (
-                    <div key={header.id} className="flex items-center gap-2 p-2 border rounded">
-                      <input
-                        type="checkbox"
-                        checked={header.enabled}
-                        onChange={(e) => updateHeader(header.id, 'enabled', e.target.checked)}
-                        className="rounded"
-                      />
+                    <div key={header.id} className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 p-2 border rounded">
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={header.enabled}
+                          onChange={(e) => updateHeader(header.id, 'enabled', e.target.checked)}
+                          className="rounded"
+                        />
+                        <span className="sm:hidden text-sm font-medium text-muted-foreground w-12">Key</span>
+                      </div>
                       <Input
                         placeholder="Header name"
                         value={header.key}
                         onChange={(e) => updateHeader(header.id, 'key', e.target.value)}
                         className="flex-1"
                       />
+                      <div className="sm:hidden flex items-center gap-2">
+                        <span className="text-sm font-medium text-muted-foreground w-12">Value</span>
+                      </div>
                       <Input
                         placeholder="Header value"
                         value={header.value}
@@ -341,7 +324,7 @@ export default function RestClientPage() {
                         onClick={() => removeHeader(header.id)}
                         size="sm"
                         variant="ghost"
-                        className="text-destructive hover:text-destructive"
+                        className="text-destructive hover:text-destructive self-end sm:self-auto"
                       >
                         <Minus className="h-4 w-4" />
                       </Button>
@@ -384,7 +367,7 @@ Example JSON:
                     </Button>
                   )}
                 </div>
-                
+
                 <div className="space-y-2 max-h-64 overflow-y-auto">
                   {history.length === 0 ? (
                     <p className="text-center text-muted-foreground py-8">
@@ -392,19 +375,18 @@ Example JSON:
                     </p>
                   ) : (
                     history.map((item) => (
-                      <div 
+                      <div
                         key={item.id}
                         className="flex items-center justify-between p-3 border rounded hover:bg-muted/50 cursor-pointer transition-colors"
                         onClick={() => loadFromHistory(item)}
                       >
                         <div className="flex items-center space-x-3">
-                          <Badge variant="outline" className={`${
-                            item.method === 'GET' ? 'text-blue-600' :
+                          <Badge variant="outline" className={`${item.method === 'GET' ? 'text-blue-600' :
                             item.method === 'POST' ? 'text-green-600' :
-                            item.method === 'PUT' ? 'text-orange-600' :
-                            item.method === 'DELETE' ? 'text-red-600' :
-                            'text-purple-600'
-                          }`}>
+                              item.method === 'PUT' ? 'text-orange-600' :
+                                item.method === 'DELETE' ? 'text-red-600' :
+                                  'text-purple-600'
+                            }`}>
                             {item.method}
                           </Badge>
                           <div className="flex-1 min-w-0">
@@ -439,7 +421,7 @@ Example JSON:
         {response && (
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                   <CardTitle className="text-lg flex items-center space-x-2">
                     <span>Response</span>
@@ -451,7 +433,7 @@ Example JSON:
                     {response.duration}ms • {formatBytes(response.size)}
                   </CardDescription>
                 </div>
-                <Button onClick={copyResponse} size="sm" variant="outline">
+                <Button onClick={copyResponse} size="sm" variant="outline" className="w-full sm:w-auto">
                   <Copy className="h-4 w-4 mr-2" />
                   Copy Response
                 </Button>
@@ -466,8 +448,8 @@ Example JSON:
 
                 <TabsContent value="response" className="space-y-4">
                   <Textarea
-                    value={typeof response.data === 'string' 
-                      ? response.data 
+                    value={typeof response.data === 'string'
+                      ? response.data
                       : JSON.stringify(response.data, null, 2)
                     }
                     readOnly
@@ -516,11 +498,11 @@ Example JSON:
                 </ul>
               </div>
             </div>
-            
+
             <div className="p-4 bg-muted/50 rounded-lg">
               <h4 className="font-medium mb-2">CORS Note:</h4>
               <p className="text-muted-foreground">
-                Some APIs may not work due to CORS (Cross-Origin Resource Sharing) restrictions 
+                Some APIs may not work due to CORS (Cross-Origin Resource Sharing) restrictions
                 when testing from a browser. This is a security feature and not a limitation of this tool.
               </p>
             </div>

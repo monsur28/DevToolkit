@@ -29,13 +29,13 @@ export default function HashGeneratorPage() {
   const simpleHash = (str: string, algorithm: string): string => {
     let hash = 0;
     if (str.length === 0) return hash.toString();
-    
+
     for (let i = 0; i < str.length; i++) {
       const char = str.charCodeAt(i);
       hash = ((hash << 5) - hash) + char;
       hash = hash & hash; // Convert to 32bit integer
     }
-    
+
     // Simulate different hash lengths
     const hashStr = Math.abs(hash).toString(16);
     switch (algorithm) {
@@ -130,7 +130,7 @@ export default function HashGeneratorPage() {
 SHA1: ${hashResult.sha1}
 SHA256: ${hashResult.sha256}
 SHA512: ${hashResult.sha512}`;
-    
+
     await navigator.clipboard.writeText(allHashes);
     toast({
       title: "Copied!",
@@ -160,9 +160,9 @@ SHA512: ${hashResult.sha512}`;
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg">{title}</CardTitle>
-          <Button 
+          <Button
             onClick={() => copyAllHashes(hashResult)}
-            size="sm" 
+            size="sm"
             variant="outline"
           >
             <Copy className="h-4 w-4 mr-2" />
@@ -224,16 +224,16 @@ SHA512: ${hashResult.sha512}`;
                 onChange={(e) => setInput(e.target.value)}
                 className="min-h-[200px]"
               />
-              <div className="flex gap-2">
-                <Button onClick={generateHashes} className="flex items-center space-x-2">
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Button onClick={generateHashes} className="flex items-center space-x-2 w-full sm:w-auto">
                   <Hash className="h-4 w-4" />
                   <span>Generate Hashes</span>
                 </Button>
-                <Button onClick={clear} variant="outline" className="flex items-center space-x-2">
+                <Button onClick={clear} variant="outline" className="flex items-center space-x-2 w-full sm:w-auto">
                   <Trash2 className="h-4 w-4" />
                   <span>Clear</span>
                 </Button>
-                <Button onClick={loadExample} variant="outline" size="sm">
+                <Button onClick={loadExample} variant="outline" size="sm" className="w-full sm:w-auto">
                   Load Example
                 </Button>
               </div>
@@ -330,7 +330,7 @@ SHA512: ${hashResult.sha512}`;
               </div>
             </div>
           </div>
-          
+
           <div className="mt-6 p-4 bg-muted/50 rounded-lg">
             <h4 className="font-medium mb-2">Use Cases:</h4>
             <ul className="text-sm text-muted-foreground space-y-1">

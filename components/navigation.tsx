@@ -2,20 +2,21 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { 
-  Wrench, 
-  Home, 
-  Moon, 
-  Sun, 
-  Menu, 
-  Grid3X3, 
-  Heart, 
-  Mail, 
-  ChevronDown, 
-  Sparkles, 
-  Zap, 
-  Code2, 
-  Palette, 
+import { motion } from 'framer-motion';
+import {
+  Wrench,
+  Home,
+  Moon,
+  Sun,
+  Menu,
+  Grid3X3,
+  Heart,
+  Mail,
+  ChevronDown,
+  Sparkles,
+  Zap,
+  Code2,
+  Palette,
   Shield,
   X,
   ArrowRight,
@@ -53,10 +54,14 @@ const tools = [
   { name: 'YAML ⇄ JSON', href: '/tools/yaml-json-converter', category: 'Conversion', icon: '🔄' },
   { name: 'Markdown Previewer', href: '/tools/markdown-previewer', category: 'Development', icon: '👁️' },
   { name: 'Cron Generator', href: '/tools/cron-generator', category: 'Generators', icon: '📅' },
+  { name: 'QR Code Generator', href: '/tools/qr-code-generator', category: 'Generators', icon: '📱' },
+  { name: 'Git Command Explorer', href: '/tools/git-explorer', category: 'Development', icon: '🌳' },
   { name: 'Code Formatter', href: '/tools/code-formatter', category: 'Development', icon: '⚡' },
   { name: 'CSS Gradient Generator', href: '/tools/css-gradient-generator', category: 'Design', icon: '🎨' },
+  { name: 'SVG Shape Generator', href: '/tools/svg-shape-generator', category: 'Design', icon: '🌊' },
   { name: 'PX to REM Converter', href: '/tools/px-to-rem-converter', category: 'Design', icon: '📐' },
   { name: 'Responsive Design Tester', href: '/tools/responsive-design-tester', category: 'Design', icon: '📱' },
+  { name: 'Glassmorphism Generator', href: '/tools/glassmorphism-generator', category: 'Design', icon: '🧊' },
   { name: 'Color Palette Extractor', href: '/tools/color-palette', category: 'Design', icon: '🎨' },
   { name: 'HTML Email Tester', href: '/tools/html-email-tester', category: 'Development', icon: '📧' },
   { name: 'Faker Data Generator', href: '/tools/faker-data-generator', category: 'Generators', icon: '🎲' },
@@ -97,15 +102,15 @@ export function Navigation() {
 
   useEffect(() => {
     setMounted(true);
-    
+
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20);
     };
-    
+
     window.addEventListener('scroll', handleScroll);
     // Call it once to set the initial state
     handleScroll();
-    
+
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
@@ -145,11 +150,10 @@ export function Navigation() {
   );
 
   return (
-    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-      isScrolled 
-        ? 'bg-background/80 backdrop-blur-xl border-b shadow-lg' 
-        : 'bg-transparent'
-    }`}>
+    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled
+      ? 'bg-background/80 backdrop-blur-xl border-b shadow-lg'
+      : 'bg-transparent'
+      }`}>
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
@@ -172,31 +176,35 @@ export function Navigation() {
               {navItems.map((item) => {
                 const IconComponent = item.icon;
                 const isActive = pathname === item.href || (item.href === '/tools' && pathname.startsWith('/tools'));
-                
+
                 if (item.hasDropdown) {
                   return (
                     <DropdownMenu key={item.href}>
                       <DropdownMenuTrigger asChild>
-                        <Button 
+                        <Button
                           variant="ghost"
                           size="sm"
-                          className={`flex items-center space-x-2 rounded-full px-6 py-3 transition-all duration-300 hover:scale-105 relative group ${
-                            isActive 
-                              ? 'bg-primary text-primary-foreground shadow-lg' 
-                              : 'hover:bg-background/80 hover:shadow-md'
-                          }`}
+                          className={`flex items-center space-x-2 rounded-full px-6 py-3 transition-all duration-300 hover:scale-105 relative group ${isActive
+                            ? 'bg-primary text-primary-foreground shadow-lg'
+                            : 'hover:bg-background/80 hover:shadow-md'
+                            }`}
                         >
                           <IconComponent className="h-4 w-4" />
-                          <span className="font-medium">{item.name}</span>
-                          <ChevronDown className="h-3 w-3 transition-transform group-data-[state=open]:rotate-180" />
-                          
+                          <span className="font-medium relative z-10">{item.name}</span>
+                          <ChevronDown className="h-3 w-3 transition-transform group-data-[state=open]:rotate-180 relative z-10" />
+
                           {isActive && (
-                            <div className="absolute inset-0 bg-gradient-to-r from-primary to-blue-600 rounded-full opacity-20 animate-pulse" />
+                            <motion.div
+                              layoutId="desktop-navbar"
+                              className="absolute inset-0 bg-gradient-to-r from-primary/10 to-blue-600/10 rounded-full border border-primary/20"
+                              initial={false}
+                              transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                            />
                           )}
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent 
-                        align="center" 
+                      <DropdownMenuContent
+                        align="center"
                         className="w-[600px] max-h-[80vh] overflow-y-auto mt-2 border-0 shadow-2xl bg-background/95 backdrop-blur-xl"
                         sideOffset={8}
                       >
@@ -216,7 +224,7 @@ export function Navigation() {
                             </Link>
                           </DropdownMenuItem>
                         </div>
-                        
+
                         <div className="p-4">
                           <div className="grid grid-cols-2 gap-4">
                             {Object.entries(toolCategories).map(([category, { tools: categoryTools, icon: CategoryIcon, color, bgColor }]) => (
@@ -230,12 +238,12 @@ export function Navigation() {
                                     <p className="text-xs text-muted-foreground">{categoryTools.length} tools</p>
                                   </div>
                                 </div>
-                                
+
                                 <div className="space-y-1">
                                   {categoryTools.slice(0, 3).map((tool) => (
                                     <DropdownMenuItem key={tool.href} asChild>
-                                      <Link 
-                                        href={tool.href} 
+                                      <Link
+                                        href={tool.href}
                                         className="flex items-center text-xs py-2 px-2 rounded-md hover:bg-background/50 transition-colors"
                                       >
                                         <span className="mr-2 text-sm">{tool.icon}</span>
@@ -243,11 +251,11 @@ export function Navigation() {
                                       </Link>
                                     </DropdownMenuItem>
                                   ))}
-                                  
+
                                   {categoryTools.length > 3 && (
                                     <DropdownMenuItem asChild>
-                                      <Link 
-                                        href="/tools" 
+                                      <Link
+                                        href="/tools"
                                         className="text-xs text-muted-foreground py-1 px-2 hover:text-foreground transition-colors"
                                       >
                                         +{categoryTools.length - 3} more...
@@ -259,11 +267,11 @@ export function Navigation() {
                             ))}
                           </div>
                         </div>
-                        
+
                         <div className="p-4 border-t bg-gradient-to-r from-primary/5 to-blue-500/5">
                           <DropdownMenuItem asChild>
-                            <Link 
-                              href="/tools" 
+                            <Link
+                              href="/tools"
                               className="flex items-center justify-center p-3 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors font-medium"
                             >
                               <Star className="h-4 w-4 mr-2" />
@@ -279,20 +287,24 @@ export function Navigation() {
 
                 return (
                   <Link key={item.href} href={item.href}>
-                    <Button 
+                    <Button
                       variant="ghost"
                       size="sm"
-                      className={`flex items-center space-x-2 rounded-full px-6 py-3 transition-all duration-300 hover:scale-105 relative ${
-                        isActive 
-                          ? 'bg-primary text-primary-foreground shadow-lg' 
-                          : 'hover:bg-background/80 hover:shadow-md'
-                      }`}
+                      className={`flex items-center space-x-2 rounded-full px-6 py-3 transition-all duration-300 hover:scale-105 relative ${isActive
+                        ? 'bg-primary text-primary-foreground shadow-lg'
+                        : 'hover:bg-background/80 hover:shadow-md'
+                        }`}
                     >
                       <IconComponent className="h-4 w-4" />
-                      <span className="font-medium">{item.name}</span>
-                      
+                      <span className="font-medium relative z-10">{item.name}</span>
+
                       {isActive && (
-                        <div className="absolute inset-0 bg-gradient-to-r from-primary to-blue-600 rounded-full opacity-20 animate-pulse" />
+                        <motion.div
+                          layoutId="desktop-navbar"
+                          className="absolute inset-0 bg-gradient-to-r from-primary/10 to-blue-600/10 rounded-full border border-primary/20"
+                          initial={false}
+                          transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                        />
                       )}
                     </Button>
                   </Link>
@@ -308,14 +320,13 @@ export function Navigation() {
               const isActive = pathname === item.href;
               return (
                 <Link key={item.href} href={item.href}>
-                  <Button 
+                  <Button
                     variant="ghost"
                     size="sm"
-                    className={`flex items-center space-x-2 rounded-full px-4 py-2 transition-all duration-300 hover:scale-105 ${
-                      isActive 
-                        ? 'bg-primary/10 text-primary border border-primary/20' 
-                        : 'hover:bg-muted/80'
-                    }`}
+                    className={`flex items-center space-x-2 rounded-full px-4 py-2 transition-all duration-300 hover:scale-105 ${isActive
+                      ? 'bg-primary/10 text-primary border border-primary/20'
+                      : 'hover:bg-muted/80'
+                      }`}
                   >
                     <IconComponent className="h-4 w-4" />
                     <span className="font-medium">{item.name}</span>
@@ -323,7 +334,7 @@ export function Navigation() {
                 </Link>
               );
             })}
-            
+
             {/* Render ThemeToggle only when mounted on client */}
             {mounted && <ThemeToggle />}
           </div>
@@ -351,26 +362,33 @@ export function Navigation() {
                     </div>
                   </SheetTitle>
                 </SheetHeader>
-                
+
                 <div className="flex flex-col space-y-6 mt-8">
                   <div className="space-y-2">
-                    {[...navItems.filter(item => !item.hasDropdown), ...endNavItems].map((item) => {
+                    {[...navItems.filter(item => !item.hasDropdown), ...endNavItems].map((item, index) => {
                       const IconComponent = item.icon;
                       const isActive = pathname === item.href;
                       return (
-                        <Link key={item.href} href={item.href} onClick={() => setIsOpen(false)}>
-                          <Button 
-                            variant={isActive ? 'secondary' : 'ghost'}
-                            className="w-full justify-start py-3 px-4 rounded-xl transition-all duration-200 hover:translate-x-1"
-                          >
-                            <IconComponent className="h-5 w-5 mr-3" />
-                            <span className="font-medium">{item.name}</span>
-                          </Button>
-                        </Link>
+                        <motion.div
+                          key={item.href}
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 0.1 + index * 0.05 }}
+                        >
+                          <Link href={item.href} onClick={() => setIsOpen(false)}>
+                            <Button
+                              variant={isActive ? 'secondary' : 'ghost'}
+                              className="w-full justify-start py-3 px-4 rounded-xl transition-all duration-200 hover:translate-x-1"
+                            >
+                              <IconComponent className="h-5 w-5 mr-3" />
+                              <span className="font-medium">{item.name}</span>
+                            </Button>
+                          </Link>
+                        </motion.div>
                       );
                     })}
                   </div>
-                  
+
                   <div className="border-t pt-6">
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="font-semibold text-lg">Popular Tools</h3>
@@ -378,12 +396,12 @@ export function Navigation() {
                         {tools.length} total
                       </span>
                     </div>
-                    
+
                     <div className="space-y-1 max-h-64 overflow-y-auto">
                       {tools.slice(0, 12).map((tool) => (
                         <Link key={tool.href} href={tool.href} onClick={() => setIsOpen(false)}>
-                          <Button 
-                            variant="ghost" 
+                          <Button
+                            variant="ghost"
                             className="w-full justify-start text-sm py-2 px-3 rounded-lg transition-all duration-200 hover:translate-x-1 hover:bg-muted/80"
                           >
                             <span className="mr-3 text-base">{tool.icon}</span>
@@ -392,9 +410,9 @@ export function Navigation() {
                         </Link>
                       ))}
                     </div>
-                    
+
                     <Link href="/tools" onClick={() => setIsOpen(false)}>
-                      <Button 
+                      <Button
                         className="w-full mt-4 bg-gradient-to-r from-primary to-blue-600 hover:from-blue-600 hover:to-purple-600 text-white rounded-xl py-3"
                       >
                         <Grid3X3 className="h-4 w-4 mr-2" />

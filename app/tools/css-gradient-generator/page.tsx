@@ -63,10 +63,10 @@ export default function CSSGradientGeneratorPage() {
 
   const generateCSS = () => {
     const { type, angle, centerX, centerY, radius, colorStops } = config;
-    
+
     // Sort color stops by position
     const sortedStops = [...colorStops].sort((a, b) => a.position - b.position);
-    
+
     // Generate color stop strings
     const stopStrings = sortedStops.map(stop => {
       const rgba = hexToRgba(stop.color, stop.opacity / 100);
@@ -131,7 +131,7 @@ background: -ms-${gradient};`;
       });
       return;
     }
-    
+
     setConfig(prev => ({
       ...prev,
       colorStops: prev.colorStops.filter(stop => stop.id !== id)
@@ -169,7 +169,7 @@ background: -ms-${gradient};`;
     a.download = 'gradient.css';
     a.click();
     URL.revokeObjectURL(url);
-    
+
     toast({
       title: "Downloaded!",
       description: "CSS file downloaded successfully",
@@ -222,18 +222,18 @@ background: -ms-${gradient};`;
         ]
       }
     };
-    
+
     setConfig(presets[preset as keyof typeof presets]);
   };
 
   const gradientStyle = {
-    background: config.type === 'linear' 
-      ? `linear-gradient(${config.angle}deg, ${config.colorStops.map(stop => 
-          `${hexToRgba(stop.color, stop.opacity / 100)} ${stop.position}%`
-        ).join(', ')})`
-      : `radial-gradient(circle at ${config.centerX}% ${config.centerY}%, ${config.colorStops.map(stop => 
-          `${hexToRgba(stop.color, stop.opacity / 100)} ${stop.position}%`
-        ).join(', ')})`
+    background: config.type === 'linear'
+      ? `linear-gradient(${config.angle}deg, ${config.colorStops.map(stop =>
+        `${hexToRgba(stop.color, stop.opacity / 100)} ${stop.position}%`
+      ).join(', ')})`
+      : `radial-gradient(circle at ${config.centerX}% ${config.centerY}%, ${config.colorStops.map(stop =>
+        `${hexToRgba(stop.color, stop.opacity / 100)} ${stop.position}%`
+      ).join(', ')})`
   };
 
   return (
@@ -260,21 +260,21 @@ background: -ms-${gradient};`;
                   {config.type === 'linear' ? 'Linear Gradient' : 'Radial Gradient'}
                 </Label>
               </div>
-              
-              <div className="flex gap-2">
-                <Button onClick={() => loadPreset('sunset')} variant="outline" size="sm">
+
+              <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+                <Button onClick={() => loadPreset('sunset')} variant="outline" size="sm" className="flex-1 sm:flex-none">
                   Sunset
                 </Button>
-                <Button onClick={() => loadPreset('ocean')} variant="outline" size="sm">
+                <Button onClick={() => loadPreset('ocean')} variant="outline" size="sm" className="flex-1 sm:flex-none">
                   Ocean
                 </Button>
-                <Button onClick={() => loadPreset('forest')} variant="outline" size="sm">
+                <Button onClick={() => loadPreset('forest')} variant="outline" size="sm" className="flex-1 sm:flex-none">
                   Forest
                 </Button>
-                <Button onClick={() => loadPreset('fire')} variant="outline" size="sm">
+                <Button onClick={() => loadPreset('fire')} variant="outline" size="sm" className="flex-1 sm:flex-none">
                   Fire
                 </Button>
-                <Button onClick={resetGradient} variant="outline" size="sm">
+                <Button onClick={resetGradient} variant="outline" size="sm" className="flex-1 sm:flex-none">
                   <RotateCcw className="h-4 w-4 mr-1" />
                   Reset
                 </Button>
@@ -293,8 +293,8 @@ background: -ms-${gradient};`;
                   {config.type === 'linear' ? 'Direction' : 'Position & Size'}
                 </CardTitle>
                 <CardDescription>
-                  {config.type === 'linear' 
-                    ? 'Set the angle of the linear gradient' 
+                  {config.type === 'linear'
+                    ? 'Set the angle of the linear gradient'
                     : 'Set the center point and radius of the radial gradient'
                   }
                 </CardDescription>
@@ -314,11 +314,11 @@ background: -ms-${gradient};`;
                       step={1}
                       className="w-full"
                     />
-                    
+
                     {/* Visual angle picker */}
                     <div className="relative w-24 h-24 mx-auto mt-4">
                       <div className="absolute inset-0 rounded-full border-2 border-muted"></div>
-                      <div 
+                      <div
                         className="absolute top-1/2 left-1/2 w-10 h-0.5 bg-primary origin-left transform -translate-y-0.5"
                         style={{ transform: `translate(-50%, -50%) rotate(${config.angle}deg) translateX(50%)` }}
                       ></div>
@@ -342,7 +342,7 @@ background: -ms-${gradient};`;
                           className="w-full"
                         />
                       </div>
-                      
+
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
                           <Label>Center Y</Label>
@@ -358,7 +358,7 @@ background: -ms-${gradient};`;
                         />
                       </div>
                     </div>
-                    
+
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <Label>Radius</Label>
@@ -408,7 +408,7 @@ background: -ms-${gradient};`;
                         </Button>
                       )}
                     </div>
-                    
+
                     <div className="grid grid-cols-2 gap-3">
                       <div className="space-y-2">
                         <Label>Color</Label>
@@ -429,7 +429,7 @@ background: -ms-${gradient};`;
                           />
                         </div>
                       </div>
-                      
+
                       <div className="space-y-2">
                         <Label>Position ({stop.position}%)</Label>
                         <Slider
@@ -442,7 +442,7 @@ background: -ms-${gradient};`;
                         />
                       </div>
                     </div>
-                    
+
                     <div className="space-y-2">
                       <Label>Opacity ({stop.opacity}%)</Label>
                       <Slider
@@ -496,7 +496,7 @@ background: -ms-${gradient};`;
                 <CardDescription>Real-time gradient preview</CardDescription>
               </CardHeader>
               <CardContent>
-                <div 
+                <div
                   className="w-full h-64 rounded-lg border shadow-inner"
                   style={gradientStyle}
                 />

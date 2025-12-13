@@ -38,10 +38,10 @@ export default function ColorPaletteExtractorPage() {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
     return result
       ? {
-          r: Number.parseInt(result[1], 16),
-          g: Number.parseInt(result[2], 16),
-          b: Number.parseInt(result[3], 16),
-        }
+        r: Number.parseInt(result[1], 16),
+        g: Number.parseInt(result[2], 16),
+        b: Number.parseInt(result[3], 16),
+      }
       : { r: 0, g: 0, b: 0 }
   }
 
@@ -498,12 +498,12 @@ export default function ColorPaletteExtractorPage() {
                     />
                   </div>
                 </div>
-                <div className="flex gap-2 mt-6">
-                  <Button onClick={generateColorPalette} className="flex items-center space-x-2">
+                <div className="flex flex-col sm:flex-row gap-2 mt-6">
+                  <Button onClick={generateColorPalette} className="flex items-center space-x-2 w-full sm:w-auto">
                     <Palette className="h-4 w-4" />
                     <span>Generate Palette</span>
                   </Button>
-                  <Button onClick={clearAll} variant="outline" className="flex items-center space-x-2">
+                  <Button onClick={clearAll} variant="outline" className="flex items-center space-x-2 w-full sm:w-auto">
                     <Trash2 className="h-4 w-4" />
                     <span>Clear</span>
                   </Button>

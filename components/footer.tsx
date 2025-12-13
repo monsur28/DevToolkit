@@ -60,7 +60,7 @@ export function Footer() {
   const [email, setEmail] = useState("")
   const [isSubscribing, setIsSubscribing] = useState(false)
   const { toast } = useToast()
-  
+
   // State to hold the dynamic gradient style, only calculated on the client
   const [gradientStyle, setGradientStyle] = useState({});
 
@@ -72,11 +72,10 @@ export function Footer() {
       // Now it's safe to use window here
       const { clientX, clientY } = e;
       const { innerWidth, innerHeight } = window;
-      
+
       setGradientStyle({
-        background: `radial-gradient(circle at ${
-          (clientX / innerWidth) * 100
-        }% ${(clientY / innerHeight) * 100}%, rgba(0, 0, 0, 0.1) 0%, transparent 50%)`,
+        background: `radial-gradient(circle at ${(clientX / innerWidth) * 100
+          }% ${(clientY / innerHeight) * 100}%, rgba(0, 0, 0, 0.1) 0%, transparent 50%)`,
       });
     }
 
@@ -97,14 +96,35 @@ export function Footer() {
 
     setIsSubscribing(true)
 
-    setTimeout(() => {
+    try {
+      const response = await fetch('/api/subscribe', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Subscription failed');
+      }
+
       toast({
-        title: "Success!",
+        title: "Success! 🎉",
         description: "Thank you for subscribing to our newsletter!",
       })
       setEmail("")
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to subscribe. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
       setIsSubscribing(false)
-    }, 1000)
+    }
   }
 
   const scrollToTop = () => {
@@ -117,7 +137,7 @@ export function Footer() {
       {/* Enhanced Background Effects */}
       <div className="absolute inset-0">
         <div className="absolute inset-0 bg-gradient-to-r from-gray-100/50 via-gray-200/30 to-gray-100/50 dark:from-gray-900/50 dark:via-gray-800/30 dark:to-gray-900/50 animate-gradient-x" />
-        
+
         {/* Dynamic mesh gradient now uses state */}
         <div
           className="absolute inset-0 opacity-20"
